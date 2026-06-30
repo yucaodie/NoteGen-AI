@@ -1,0 +1,33 @@
+SupaNoteGen笔记中的内容总结如下，将其转化为Claude Code编程的需求：
+
+1. **架构解耦**：
+  - 保留NoteGen的本地Markdown读写逻辑作为缓存层。
+  - 增加SyncService，实现本地文件与Supabase的同步。当本地文件发生增删改时，触发同步；当应用启动时，从Supabase拉取最新数据。
+2. **用户与群组权限管理**：
+  - 在notes表中添加user_id字段，并利用Supabase的RLS（行级安全）实现用户隔离。
+  - 设置RLS策略为auth.uid() = user_id，确保每个用户只能看到自己的笔记。
+  - 建立groups表和group_members表，并在notes表中添加group_id字段。
+  - RLS策略设置为：如果当前用户是该group的成员，或者笔记的user_id是当前用户，则允许访问。
+3. **构建独立的RAG API网关**：
+  - 创建一个独立的RAG API，用于处理基于笔记的问答请求。
+  - 云端向量化：当笔记通过SyncService同步到Supabase时，触发Edge Function或Webhook，调用Embedding模型，将文本存入Supabase的pgvector扩展中。
+  - 暴露API：使用Supabase的Edge Function创建一个/api/rag/chat接口，接收外部请求，检索相似文档，拼接Prompt后调用大模型，并返回答案。
+4. **敏捷开发与分阶段交付**：
+  - 按里程碑推进开发，确保每个阶段的可交付成果清晰明确。
+  - V0.1：实现NoteGen本地数据与Supabase的同步，确保数据能在Supabase控制台查看。
+  - V0.2：接入Supabase Auth，实现注册登录，并配合RLS实现多用户隔离。
+  - V0.3：开发群组管理界面，实现笔记在群组内的共享。
+  - V0.4：接入pgvector，创建基于笔记的RAG问答API。
+5. **利用Supabase现成生态**：
+  - 利用Supabase官方提供的JS客户端（@supabase/supabase-js）和React Hooks（useSupabase）。
+  - 由于NoteGen前端基于Next.js，可以无缝集成这些工具，节省开发时间。
+
+**需求总结**：
+
+- 实现本地与云端的同步架构。
+- 设置RLS策略实现用户隔离和群组共享。
+- 构建独立的RAG API网关。
+- 按照分阶段的里程碑逐步实现功能。
+- 利用Supabase现成的生态工具，提升开发效率。
+
+&nbsp;
