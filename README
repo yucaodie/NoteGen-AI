@@ -1,33 +1,114 @@
-SupaNoteGen笔记中的内容总结如下，将其转化为Claude Code编程的需求：
+# SupaNoteGen
 
-1. **架构解耦**：
-  - 保留NoteGen的本地Markdown读写逻辑作为缓存层。
-  - 增加SyncService，实现本地文件与Supabase的同步。当本地文件发生增删改时，触发同步；当应用启动时，从Supabase拉取最新数据。
-2. **用户与群组权限管理**：
-  - 在notes表中添加user_id字段，并利用Supabase的RLS（行级安全）实现用户隔离。
-  - 设置RLS策略为auth.uid() = user_id，确保每个用户只能看到自己的笔记。
-  - 建立groups表和group_members表，并在notes表中添加group_id字段。
-  - RLS策略设置为：如果当前用户是该group的成员，或者笔记的user_id是当前用户，则允许访问。
-3. **构建独立的RAG API网关**：
-  - 创建一个独立的RAG API，用于处理基于笔记的问答请求。
-  - 云端向量化：当笔记通过SyncService同步到Supabase时，触发Edge Function或Webhook，调用Embedding模型，将文本存入Supabase的pgvector扩展中。
-  - 暴露API：使用Supabase的Edge Function创建一个/api/rag/chat接口，接收外部请求，检索相似文档，拼接Prompt后调用大模型，并返回答案。
-4. **敏捷开发与分阶段交付**：
-  - 按里程碑推进开发，确保每个阶段的可交付成果清晰明确。
-  - V0.1：实现NoteGen本地数据与Supabase的同步，确保数据能在Supabase控制台查看。
-  - V0.2：接入Supabase Auth，实现注册登录，并配合RLS实现多用户隔离。
-  - V0.3：开发群组管理界面，实现笔记在群组内的共享。
-  - V0.4：接入pgvector，创建基于笔记的RAG问答API。
-5. **利用Supabase现成生态**：
-  - 利用Supabase官方提供的JS客户端（@supabase/supabase-js）和React Hooks（useSupabase）。
-  - 由于NoteGen前端基于Next.js，可以无缝集成这些工具，节省开发时间。
+SupaNoteGen 是一个参考 NoteGen 前端体验的浏览器优先知识库平台。项目目标是保留优秀的富文本与 Markdown 编辑体验、树状知识组织方式，同时通过前后端分离架构提供多用户隔离、群组共享、知识库开放接口和 RAG 能力。
 
-**需求总结**：
+## 项目定位
 
-- 实现本地与云端的同步架构。
-- 设置RLS策略实现用户隔离和群组共享。
-- 构建独立的RAG API网关。
-- 按照分阶段的里程碑逐步实现功能。
-- 利用Supabase现成的生态工具，提升开发效率。
+- 产品形态：浏览器优先的多用户知识库 SaaS
+- 体验参考：NoteGen 的编辑器交互、树状导航、内容组织方式
+- 架构方向：`Next.js Frontend + 独立 Node.js API Service + Supabase`
+- 核心能力：认证、多租户隔离、协作共享、向量检索、对外 RAG API
 
-&nbsp;
+## 核心目标
+
+1. 提供接近 NoteGen 的知识编辑和浏览体验。
+2. 支持邮箱注册登录和用户级数据隔离。
+3. 支持群组、知识库共享和只读/读写权限控制。
+4. 支持浏览器本地缓存、草稿恢复和多端同步。
+5. 支持基于知识库的向量化检索和标准化 RAG API。
+
+## 系统架构
+
+```mermaid
+graph TD
+    A["Browser Client"] --> B["Next.js Frontend"]
+    B --> C["Browser Cache"]
+    B --> D["App API Layer"]
+    D --> E["Supabase Auth"]
+    D --> F["Supabase Postgres"]
+    F --> G["RLS Policies"]
+    D --> H["Supabase Realtime"]
+    F --> I["Embedding Jobs"]
+    I --> J["pgvector Index"]
+    D --> K["RAG API Gateway"]
+    K --> J
+    K --> L["LLM Provider"]
+```
+
+### 分层职责
+
+- `Next.js Frontend`：负责页面、编辑器、知识库树、共享管理和用户交互。
+- `Browser Cache`：负责草稿、本地同步状态和最近访问数据缓存。
+- `Node.js API Service`：负责业务 API、共享规则、API Key 管理、RAG Gateway 和审计。
+- `Supabase`：负责 Auth、Postgres、RLS、Realtime、pgvector 与异步任务支撑。
+
+## 功能范围
+
+### 1. 用户系统与数据隔离
+
+- 支持邮箱/密码注册登录。
+- 所有知识库、文件夹、笔记数据绑定 `owner_user_id`。
+- 通过 Supabase RLS 在数据库层执行最终访问控制。
+
+### 2. 群组与共享协作
+
+- 支持创建群组、邀请成员、接受邀请。
+- 支持共享知识库或文件夹给群组。
+- 支持 `read` 和 `write` 两级权限。
+
+### 3. 浏览器编辑与同步
+
+- 提供树状目录、笔记详情和编辑器工作区。
+- 使用浏览器缓存保存草稿和同步状态。
+- 通过 `SyncService` 实现增量同步、失败重试和冲突记录。
+
+### 4. RAG 与开放接口
+
+- 笔记同步后进入向量化任务链路。
+- 使用 `pgvector` 保存知识片段向量。
+- 对外提供 `POST /api/v1/rag/chat`。
+- 使用 API Key 控制访问范围、调用审计和后续限流能力。
+
+## 推荐技术栈
+
+- 前端：`Next.js`、`React`
+- 后端：独立 `Node.js API Service`
+- BaaS：`Supabase Auth`、`Supabase Postgres`、`Supabase Realtime`
+- 检索：`pgvector`
+- 异步任务：`Supabase Edge Functions` 或 Worker
+
+## 交付里程碑
+
+### V0.1 基础工程与同步闭环
+
+- 搭建前端、API 服务和 Supabase 项目。
+- 完成知识库、文件夹、笔记的基础 CRUD。
+- 完成浏览器缓存和基础同步闭环。
+
+### V0.2 认证与隔离
+
+- 接入注册登录。
+- 完成 `owner_user_id` 全链路绑定。
+- 完成用户级数据隔离和会话恢复。
+
+### V0.3 群组与共享
+
+- 上线群组、邀请、成员管理。
+- 上线知识库共享与读写权限控制。
+- 扩展共享资源的访问上下文。
+
+### V0.4 RAG 平台
+
+- 上线向量化任务链路和向量检索。
+- 上线 API Key 管理和对外 RAG API。
+- 完成基于授权知识域的问答能力。
+
+## 当前规格文档
+
+- 需求文档：`当前工作区/.monkeycode/specs/supanotegen-original-requirement/requirements.md`
+- 技术方案：`当前工作区/.monkeycode/specs/supanotegen-original-requirement/design.md`
+- 实施计划：`当前工作区/.monkeycode/specs/supanotegen-original-requirement/tasklist.md`
+
+## 当前状态
+
+当前仓库已经完成需求、设计和实施任务拆解，代码实现尚未开始。推荐按 `tasklist.md` 的顺序推进开发，从基础工程、数据模型和认证链路开始落地。
