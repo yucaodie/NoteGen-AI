@@ -8,7 +8,7 @@
     - 为前端和 API 服务的启动配置编写单元测试
     - 为环境变量校验和 Supabase 客户端初始化编写测试
 
-- [ ] 2. 实现核心数据模型、数据库迁移和 RLS 策略
+- [x] 2. 实现核心数据模型、数据库迁移和 RLS 策略
   - 创建 `user_profiles`、`knowledge_bases`、`folders`、`notes`、`sync_events`、`groups`、`group_invitations`、`group_members`、`resource_shares`、`embedding_jobs`、`note_chunks`、`note_embeddings`、`api_keys` 的迁移脚本，对应 Requirement 2、3、4、7、9
   - 为私有资源表实现 `owner_user_id = auth.uid()` 的 RLS 策略，并对高价值表追加强制 RLS，覆盖设计中的 Correctness Property 1
   - 为共享访问实现基于 `resource_shares` 与 `group_members` 的读写策略，覆盖 Requirement 4 与 Correctness Property 2
