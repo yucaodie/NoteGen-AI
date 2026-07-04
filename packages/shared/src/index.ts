@@ -55,6 +55,59 @@ export type ApiKey = {
   status: 'active' | 'revoked';
 };
 
+export type UserProfile = {
+  userId: string;
+  displayName: string;
+  defaultWorkspaceId: string | null;
+};
+
+export type GroupMembership = {
+  groupId: string;
+  role: 'owner' | 'member';
+};
+
+export type AccessContext = {
+  userId: string;
+  groupIds: string[];
+  knowledgeBaseIds: string[];
+};
+
+export type AuthUser = {
+  id: string;
+  email: string;
+};
+
+export type AuthSession = {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  user: AuthUser;
+};
+
+export type WorkspaceBootstrap = {
+  profile: UserProfile;
+  knowledgeBases: KnowledgeBase[];
+  memberships: GroupMembership[];
+  accessContext: AccessContext;
+  mode: 'online' | 'offline-readonly';
+};
+
+export type AuthBootstrap = {
+  session: AuthSession;
+  workspace: WorkspaceBootstrap;
+};
+
+export type AuthErrorCode =
+  | 'auth_failed'
+  | 'session_expired'
+  | 'network_error'
+  | 'invalid_request';
+
+export type ApiErrorPayload = {
+  code: AuthErrorCode;
+  message: string;
+};
+
 export type SyncMetadata = {
   resourceId: string;
   resourceType: 'knowledge_base' | 'folder' | 'note';

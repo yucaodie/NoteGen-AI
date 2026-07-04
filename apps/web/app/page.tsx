@@ -20,6 +20,9 @@ export default function HomePage() {
               当前仓库已经进入基础工程阶段。前端、独立 API 服务、Supabase 权限底座和 UI 验证基线会从这里开始建立。
             </p>
             <div className="cta-row">
+              <Link className="primary-button" href="/auth">
+                登录云端工作区
+              </Link>
               <Link className="primary-button" href="/workspace">
                 进入工作区壳层
               </Link>

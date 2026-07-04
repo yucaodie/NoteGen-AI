@@ -161,6 +161,61 @@ button {
   max-width: 700px;
 }
 
+.auth-shell {
+  max-width: 860px;
+}
+
+.auth-card,
+.workspace-panels {
+  width: 100%;
+}
+
+.mode-switch {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.field-label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.text-input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+}
+
+.feedback-banner {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+}
+
+.error-banner {
+  background: rgba(184, 74, 46, 0.12);
+  color: #8a321a;
+}
+
+.workspace-header-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
 @media (min-width: 900px) {
   .hero-grid {
     grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);

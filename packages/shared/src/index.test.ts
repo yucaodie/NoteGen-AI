@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AppDescriptor, SyncMetadata } from './index';
+import type { AccessContext, AppDescriptor, AuthBootstrap, SyncMetadata } from './index';
 
 describe('shared domain contracts', () => {
   it('supports the base API descriptor shape', () => {
@@ -27,5 +27,46 @@ describe('shared domain contracts', () => {
 
     expect(metadata.syncStatus).toBe('pending');
     expect(metadata.cloudVersion).toBeLessThan(metadata.localVersion);
+  });
+
+  it('supports auth bootstrap payloads for workspace recovery', () => {
+    const accessContext: AccessContext = {
+      userId: 'user-1',
+      groupIds: ['group-1'],
+      knowledgeBaseIds: ['kb-1'],
+    };
+
+    const bootstrap: AuthBootstrap = {
+      session: {
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        expiresAt: '2026-07-04T05:00:00.000Z',
+        user: {
+          id: 'user-1',
+          email: 'user@example.com',
+        },
+      },
+      workspace: {
+        profile: {
+          userId: 'user-1',
+          displayName: 'user',
+          defaultWorkspaceId: 'kb-1',
+        },
+        knowledgeBases: [
+          {
+            id: 'kb-1',
+            ownerUserId: 'user-1',
+            name: 'My Knowledge Base',
+            description: null,
+          },
+        ],
+        memberships: [],
+        accessContext,
+        mode: 'online',
+      },
+    };
+
+    expect(bootstrap.workspace.accessContext.knowledgeBaseIds).toContain('kb-1');
+    expect(bootstrap.session.user.email).toContain('@');
   });
 });
