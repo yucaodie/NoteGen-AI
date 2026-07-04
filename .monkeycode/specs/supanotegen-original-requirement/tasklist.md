@@ -1,10 +1,10 @@
 # 需求实施计划
 
-- [ ] 1. 搭建 Web 前端、独立 API 服务与 Supabase 基础工程
+- [x] 1. 搭建 Web 前端、独立 API 服务与 Supabase 基础工程
   - 创建前端应用、后端 API 服务和共享类型包的目录结构，对应设计中的 `Next.js Frontend`、`App API Layer` 和 `Supabase Responsibilities`
   - 配置环境变量读取、Supabase 客户端封装、基础日志与错误处理中间件，覆盖 Requirement 10 的 V0.1 交付目标
   - 定义前后端共享的领域类型和接口骨架，包括 `KnowledgeBase`、`Folder`、`Note`、`Group`、`ResourceShare`、`ApiKey`、`SyncMetadata`
-  - [ ]* 1.1 为工程初始化编写基础健康检查与配置加载测试
+  - [x]* 1.1 为工程初始化编写基础健康检查与配置加载测试
     - 为前端和 API 服务的启动配置编写单元测试
     - 为环境变量校验和 Supabase 客户端初始化编写测试
 

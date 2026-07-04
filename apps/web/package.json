@@ -1,0 +1,22 @@
+{
+  "name": "@supanotegen/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0 --port 3000",
+    "build": "next build",
+    "test": "vitest run",
+    "test:ui": "playwright test"
+  },
+  "dependencies": {
+    "@supanotegen/shared": "0.1.0",
+    "next": "15.5.20",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.15",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "supanotegen",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "build": "npm run build -w packages/shared && npm run build -w apps/api && npm run build -w apps/web",
+    "test": "npm run test -w packages/shared && npm run test -w apps/api && npm run test -w apps/web",
+    "test:ui": "npm run test:ui -w apps/web"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.1",
+    "concurrently": "^9.2.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
