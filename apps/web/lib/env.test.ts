@@ -19,7 +19,7 @@ describe('getWebEnv', () => {
   it('falls back to safe development defaults', () => {
     const env = getWebEnv({});
 
-    expect(env.apiBaseUrl).toBe('http://127.0.0.1:4000');
+    expect(env.apiBaseUrl).toBe('');
     expect(env.supabaseUrl).toContain('supabase.co');
     expect(env.supabaseAnonKey).toBe('public-anon-key');
   });
