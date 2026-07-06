@@ -5,6 +5,8 @@ import type {
   AuthUser,
   GroupMembership,
   KnowledgeBase,
+  PendingEmailConfirmation,
+  SignUpResult,
   UserProfile,
   WorkspaceBootstrap,
 } from '@supanotegen/shared';
@@ -54,7 +56,7 @@ type GroupMembershipRow = {
 };
 
 export type AuthService = {
-  signUp: (email: string, password: string) => Promise<AuthBootstrap>;
+  signUp: (email: string, password: string) => Promise<SignUpResult>;
   signIn: (email: string, password: string) => Promise<AuthBootstrap>;
   signOut: (accessToken: string) => Promise<void>;
   getSession: (accessToken: string, refreshToken?: string) => Promise<AuthBootstrap>;
@@ -64,13 +66,17 @@ export function createAuthService(env: ApiEnv, fetchImpl: FetchLike = fetch): Au
   const authBaseUrl = new URL('/auth/v1/', env.supabaseUrl).toString();
   const restBaseUrl = new URL('/rest/v1/', env.supabaseUrl).toString();
 
-  async function signUp(email: string, password: string): Promise<AuthBootstrap> {
+  async function signUp(email: string, password: string): Promise<SignUpResult> {
     const payload = await authRequest<SupabaseSessionResponse>('signup', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
 
-    const session = mapSession(payload);
+    const session = mapSignUpSession(payload);
+    if (!session) {
+      return buildPendingEmailConfirmation(payload, email);
+    }
+
     return buildBootstrap(session);
   }
 
@@ -182,31 +188,39 @@ export function createAuthService(env: ApiEnv, fetchImpl: FetchLike = fetch): Au
   }
 
   async function ensureProfile(user: AuthUser): Promise<UserProfile> {
-    const existingRows = await restRequest<UserProfileRow[]>(
-      `user_profiles?user_id=eq.${encodeURIComponent(user.id)}&select=user_id,display_name,default_workspace_id`,
-      {
-        method: 'GET',
-      },
-    );
-
-    if (existingRows.length > 0) {
-      return mapProfile(existingRows[0]);
-    }
-
-    const insertedRows = await restRequest<UserProfileRow[]>('user_profiles', {
-      method: 'POST',
-      headers: {
-        Prefer: 'return=representation,resolution=merge-duplicates',
-      },
-      body: JSON.stringify([
+    try {
+      const existingRows = await restRequest<UserProfileRow[]>(
+        `user_profiles?user_id=eq.${encodeURIComponent(user.id)}&select=user_id,display_name,default_workspace_id`,
         {
-          user_id: user.id,
-          display_name: inferDisplayName(user.email),
+          method: 'GET',
         },
-      ]),
-    });
+      );
 
-    return mapProfile(insertedRows[0]);
+      if (existingRows.length > 0) {
+        return mapProfile(existingRows[0]);
+      }
+
+      const insertedRows = await restRequest<UserProfileRow[]>('user_profiles', {
+        method: 'POST',
+        headers: {
+          Prefer: 'return=representation,resolution=merge-duplicates',
+        },
+        body: JSON.stringify([
+          {
+            user_id: user.id,
+            display_name: inferDisplayName(user.email),
+          },
+        ]),
+      });
+
+      return mapProfile(insertedRows[0]);
+    } catch (error) {
+      if (isMissingTableError(error, 'user_profiles')) {
+        return createFallbackProfile(user, null);
+      }
+
+      throw error;
+    }
   }
 
   async function ensureDefaultWorkspace(
@@ -232,11 +246,11 @@ export function createAuthService(env: ApiEnv, fetchImpl: FetchLike = fetch): Au
       });
 
       knowledgeBases = createdRows.map(mapKnowledgeBase);
-      nextProfile = await updateDefaultWorkspace(profile.userId, knowledgeBases[0].id);
+      nextProfile = await updateDefaultWorkspace(nextProfile, knowledgeBases[0].id);
     }
 
     if (!nextProfile.defaultWorkspaceId && knowledgeBases.length > 0) {
-      nextProfile = await updateDefaultWorkspace(profile.userId, knowledgeBases[0].id);
+      nextProfile = await updateDefaultWorkspace(nextProfile, knowledgeBases[0].id);
     }
 
     return {
@@ -245,19 +259,30 @@ export function createAuthService(env: ApiEnv, fetchImpl: FetchLike = fetch): Au
     };
   }
 
-  async function updateDefaultWorkspace(userId: string, knowledgeBaseId: string): Promise<UserProfile> {
-    const updatedRows = await restRequest<UserProfileRow[]>(
-      `user_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,display_name,default_workspace_id`,
-      {
-        method: 'PATCH',
-        headers: {
-          Prefer: 'return=representation',
+  async function updateDefaultWorkspace(profile: UserProfile, knowledgeBaseId: string): Promise<UserProfile> {
+    try {
+      const updatedRows = await restRequest<UserProfileRow[]>(
+        `user_profiles?user_id=eq.${encodeURIComponent(profile.userId)}&select=user_id,display_name,default_workspace_id`,
+        {
+          method: 'PATCH',
+          headers: {
+            Prefer: 'return=representation',
+          },
+          body: JSON.stringify({ default_workspace_id: knowledgeBaseId }),
         },
-        body: JSON.stringify({ default_workspace_id: knowledgeBaseId }),
-      },
-    );
+      );
 
-    return mapProfile(updatedRows[0]);
+      return mapProfile(updatedRows[0]);
+    } catch (error) {
+      if (isMissingTableError(error, 'user_profiles')) {
+        return {
+          ...profile,
+          defaultWorkspaceId: knowledgeBaseId,
+        };
+      }
+
+      throw error;
+    }
   }
 
   async function listKnowledgeBases(userId: string): Promise<KnowledgeBase[]> {
@@ -341,6 +366,14 @@ function inferDisplayName(email: string): string {
   return localPart && localPart.length > 0 ? localPart : 'SupaNoteGen User';
 }
 
+function createFallbackProfile(user: AuthUser, defaultWorkspaceId: string | null): UserProfile {
+  return {
+    userId: user.id,
+    displayName: inferDisplayName(user.email),
+    defaultWorkspaceId,
+  };
+}
+
 function mapUser(user: SupabaseAuthUser): AuthUser {
   return {
     id: user.id,
@@ -361,6 +394,29 @@ function mapSession(payload: SupabaseSessionResponse): AuthSession {
     refreshToken: payload.refresh_token,
     expiresAt: new Date(Date.now() + (payload.expires_in ?? 3600) * 1000).toISOString(),
     user: mapUser(payload.user),
+  };
+}
+
+function mapSignUpSession(payload: SupabaseSessionResponse): AuthSession | null {
+  if (payload.access_token && payload.refresh_token && payload.user) {
+    return mapSession(payload);
+  }
+
+  if (payload.user) {
+    return null;
+  }
+
+  return mapSession(payload);
+}
+
+function buildPendingEmailConfirmation(
+  payload: SupabaseSessionResponse,
+  fallbackEmail: string,
+): PendingEmailConfirmation {
+  return {
+    status: 'pending_email_confirmation',
+    email: payload.user?.email ?? fallbackEmail,
+    message: payload.msg ?? '注册成功，请先确认邮箱后再登录。',
   };
 }
 
@@ -412,4 +468,9 @@ async function createSupabaseError(response: Response, fallbackMessage: string):
   error.statusCode = response.status;
   error.code = code;
   return error;
+}
+
+function isMissingTableError(error: unknown, tableName: string): boolean {
+  const supabaseError = error as SupabaseAuthError;
+  return supabaseError.code === 'PGRST205' && supabaseError.message.includes(`public.${tableName}`);
 }

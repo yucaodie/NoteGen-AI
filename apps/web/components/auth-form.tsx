@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import type { AuthBootstrap, SignUpResult } from '@supanotegen/shared';
 import { signIn, signUp } from '../lib/auth';
 import { saveStoredSession, saveStoredWorkspace } from '../lib/auth-storage';
 
@@ -11,6 +12,7 @@ export function AuthForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -44,10 +46,20 @@ export function AuthForm() {
           onSubmit={(event) => {
             event.preventDefault();
             setErrorMessage(null);
+            setSuccessMessage(null);
 
             startTransition(async () => {
               try {
-                const bootstrap = mode === 'sign-in' ? await signIn(email, password) : await signUp(email, password);
+                const result = mode === 'sign-in' ? await signIn(email, password) : await signUp(email, password);
+
+                if (isPendingEmailConfirmation(result)) {
+                  setMode('sign-in');
+                  setPassword('');
+                  setSuccessMessage(result.message);
+                  return;
+                }
+
+                const bootstrap = result;
                 saveStoredSession(bootstrap.session);
                 saveStoredWorkspace(bootstrap);
                 router.push('/workspace');
@@ -92,9 +104,14 @@ export function AuthForm() {
             {isPending ? '处理中...' : mode === 'sign-in' ? '进入工作区' : '创建账户'}
           </button>
 
+          {successMessage ? <p className="feedback-banner success-banner">{successMessage}</p> : null}
           {errorMessage ? <p className="feedback-banner error-banner">{errorMessage}</p> : null}
         </form>
       </div>
     </section>
   );
+}
+
+function isPendingEmailConfirmation(result: AuthBootstrap | SignUpResult) {
+  return 'status' in result && result.status === 'pending_email_confirmation';
 }

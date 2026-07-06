@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AccessContext, AppDescriptor, AuthBootstrap, SyncMetadata } from './index';
+import type { AccessContext, AppDescriptor, AuthBootstrap, PendingEmailConfirmation, SyncMetadata } from './index';
 
 describe('shared domain contracts', () => {
   it('supports the base API descriptor shape', () => {
@@ -68,5 +68,16 @@ describe('shared domain contracts', () => {
 
     expect(bootstrap.workspace.accessContext.knowledgeBaseIds).toContain('kb-1');
     expect(bootstrap.session.user.email).toContain('@');
+  });
+
+  it('supports pending email confirmation payloads after sign up', () => {
+    const pending: PendingEmailConfirmation = {
+      status: 'pending_email_confirmation',
+      email: 'user@example.com',
+      message: '注册成功，请先确认邮箱后再登录。',
+    };
+
+    expect(pending.status).toBe('pending_email_confirmation');
+    expect(pending.email).toContain('@');
   });
 });

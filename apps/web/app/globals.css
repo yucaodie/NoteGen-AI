@@ -204,6 +204,11 @@ button {
   border-radius: 16px;
 }
 
+.success-banner {
+  background: rgba(69, 125, 91, 0.14);
+  color: #1f5a35;
+}
+
 .error-banner {
   background: rgba(184, 74, 46, 0.12);
   color: #8a321a;

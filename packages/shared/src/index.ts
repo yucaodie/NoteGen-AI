@@ -97,6 +97,14 @@ export type AuthBootstrap = {
   workspace: WorkspaceBootstrap;
 };
 
+export type PendingEmailConfirmation = {
+  status: 'pending_email_confirmation';
+  email: string;
+  message: string;
+};
+
+export type SignUpResult = AuthBootstrap | PendingEmailConfirmation;
+
 export type AuthErrorCode =
   | 'auth_failed'
   | 'session_expired'

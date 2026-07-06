@@ -1,4 +1,4 @@
-import type { ApiErrorPayload, AuthBootstrap, AuthSession } from '@supanotegen/shared';
+import type { ApiErrorPayload, AuthBootstrap, AuthSession, SignUpResult } from '@supanotegen/shared';
 import { getApiUrl } from './api';
 
 type FetchLike = typeof fetch;
@@ -12,12 +12,12 @@ export class AuthApiError extends Error {
   }
 }
 
-export async function signUp(email: string, password: string, fetchImpl: FetchLike = fetch) {
-  return postAuth('/auth/sign-up', { email, password }, fetchImpl);
+export async function signUp(email: string, password: string, fetchImpl: FetchLike = fetch): Promise<SignUpResult> {
+  return postAuth<SignUpResult>('/auth/sign-up', { email, password }, fetchImpl);
 }
 
-export async function signIn(email: string, password: string, fetchImpl: FetchLike = fetch) {
-  return postAuth('/auth/sign-in', { email, password }, fetchImpl);
+export async function signIn(email: string, password: string, fetchImpl: FetchLike = fetch): Promise<AuthBootstrap> {
+  return postAuth<AuthBootstrap>('/auth/sign-in', { email, password }, fetchImpl);
 }
 
 export async function signOut(session: AuthSession, fetchImpl: FetchLike = fetch) {
@@ -48,7 +48,11 @@ export async function recoverSession(session: AuthSession, fetchImpl: FetchLike 
   return (await response.json()) as AuthBootstrap;
 }
 
-async function postAuth(path: string, payload: { email: string; password: string }, fetchImpl: FetchLike) {
+async function postAuth<T>(
+  path: string,
+  payload: { email: string; password: string },
+  fetchImpl: FetchLike,
+): Promise<T> {
   const response = await fetchImpl(getApiUrl(path), {
     method: 'POST',
     headers: {
@@ -61,7 +65,7 @@ async function postAuth(path: string, payload: { email: string; password: string
     throw await parseApiError(response, '认证失败。');
   }
 
-  return (await response.json()) as AuthBootstrap;
+  return (await response.json()) as T;
 }
 
 async function parseApiError(response: Response, fallbackMessage: string) {

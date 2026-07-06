@@ -1,4 +1,4 @@
-import type { ApiErrorPayload, AuthBootstrap } from '@supanotegen/shared';
+import type { ApiErrorPayload, AuthBootstrap, SignUpResult } from '@supanotegen/shared';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { AuthService } from '../auth/service';
 
@@ -137,7 +137,11 @@ async function readJsonBody(request: IncomingMessage): Promise<AuthRequestBody> 
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as AuthRequestBody;
 }
 
-function sendJson(response: ServerResponse, statusCode: number, body: AuthBootstrap | ApiErrorPayload | { signedOut: boolean }) {
+function sendJson(
+  response: ServerResponse,
+  statusCode: number,
+  body: AuthBootstrap | SignUpResult | ApiErrorPayload | { signedOut: boolean },
+) {
   response.writeHead(statusCode, { 'content-type': 'application/json; charset=utf-8' });
   response.end(JSON.stringify(body));
 }

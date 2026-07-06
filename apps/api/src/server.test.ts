@@ -82,6 +82,23 @@ describe('createAppServer auth routes', () => {
     expect(response.body.workspace.profile.defaultWorkspaceId).toBe('kb-1');
   });
 
+  it('returns pending confirmation payload after sign up when email verification is enabled', async () => {
+    authService.signUp.mockResolvedValueOnce({
+      status: 'pending_email_confirmation',
+      email: 'pending@example.com',
+      message: '注册成功，请先确认邮箱后再登录。',
+    });
+
+    const response = await sendJsonRequest('/auth/sign-up', {
+      method: 'POST',
+      body: { email: 'pending@example.com', password: 'password-123' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('pending_email_confirmation');
+    expect(response.body.email).toBe('pending@example.com');
+  });
+
   it('returns bootstrap payload after sign in', async () => {
     const response = await sendJsonRequest('/auth/sign-in', {
       method: 'POST',
