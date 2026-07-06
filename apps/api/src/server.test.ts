@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AddressInfo } from 'node:net';
-import type { AuthBootstrap } from '@supanotegen/shared';
+import type { AuthBootstrap, Folder, KnowledgeBase, KnowledgeBaseTree, Note } from '@supanotegen/shared';
 import { createAppServer } from './server';
 
 const logger = {
@@ -47,6 +47,55 @@ const authService = {
   signIn: vi.fn(async () => bootstrapFixture),
   signOut: vi.fn(async () => undefined),
   getSession: vi.fn(async () => bootstrapFixture),
+};
+
+const knowledgeBaseFixture: KnowledgeBase = {
+  id: 'kb-1',
+  ownerUserId: 'user-1',
+  name: 'My Knowledge Base',
+  description: null,
+};
+
+const folderFixture: Folder = {
+  id: 'folder-1',
+  ownerUserId: 'user-1',
+  knowledgeBaseId: 'kb-1',
+  parentFolderId: null,
+  title: 'Inbox',
+  sortKey: '0001',
+};
+
+const noteFixture: Note = {
+  id: 'note-1',
+  ownerUserId: 'user-1',
+  knowledgeBaseId: 'kb-1',
+  folderId: 'folder-1',
+  title: 'Quick Note',
+  markdownContent: '# Hello',
+  contentHash: 'hash',
+  version: 1,
+};
+
+const knowledgeBaseTreeFixture: KnowledgeBaseTree = {
+  knowledgeBase: knowledgeBaseFixture,
+  folders: [folderFixture],
+  notes: [noteFixture],
+};
+
+const contentService = {
+  listKnowledgeBases: vi.fn(async () => [knowledgeBaseFixture]),
+  createKnowledgeBase: vi.fn(async () => knowledgeBaseFixture),
+  getKnowledgeBaseTree: vi.fn(async () => knowledgeBaseTreeFixture),
+  updateKnowledgeBase: vi.fn(async () => ({ ...knowledgeBaseFixture, name: 'Renamed Knowledge Base' })),
+  deleteKnowledgeBase: vi.fn(async () => undefined),
+  createFolder: vi.fn(async () => folderFixture),
+  updateFolder: vi.fn(async () => ({ ...folderFixture, title: 'Renamed Folder' })),
+  deleteFolder: vi.fn(async () => undefined),
+  listFolderNotes: vi.fn(async () => [noteFixture]),
+  createNote: vi.fn(async () => noteFixture),
+  updateNote: vi.fn(async () => ({ ...noteFixture, title: 'Renamed Note', version: 2 })),
+  deleteNote: vi.fn(async () => undefined),
+  createSyncEvent: vi.fn(async () => undefined),
 };
 
 let activeServer: ReturnType<typeof createAppServer> | undefined;
@@ -171,6 +220,119 @@ describe('createAppServer auth routes', () => {
   });
 });
 
+describe('createAppServer content routes', () => {
+  it('lists knowledge bases for the current user', async () => {
+    const response = await sendJsonRequest('/api/v1/knowledge-bases', {
+      method: 'GET',
+      headers: { authorization: 'Bearer access-token' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(contentService.listKnowledgeBases).toHaveBeenCalledWith('access-token');
+    expect(response.body[0]?.id).toBe('kb-1');
+  });
+
+  it('returns knowledge base tree aggregate', async () => {
+    const response = await sendJsonRequest('/api/v1/knowledge-bases/kb-1', {
+      method: 'GET',
+      headers: { authorization: 'Bearer access-token' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(contentService.getKnowledgeBaseTree).toHaveBeenCalledWith('access-token', 'kb-1');
+    expect(response.body.notes).toHaveLength(1);
+  });
+
+  it('creates and updates a note', async () => {
+    const createResponse = await sendJsonRequest('/api/v1/notes', {
+      method: 'POST',
+      headers: { authorization: 'Bearer access-token' },
+      body: {
+        knowledgeBaseId: 'kb-1',
+        folderId: 'folder-1',
+        title: 'Quick Note',
+        markdownContent: '# Hello',
+      },
+    });
+
+    const updateResponse = await sendJsonRequest('/api/v1/notes/note-1', {
+      method: 'PATCH',
+      headers: { authorization: 'Bearer access-token' },
+      body: {
+        title: 'Renamed Note',
+        markdownContent: '# Updated',
+      },
+    });
+
+    expect(createResponse.status).toBe(200);
+    expect(contentService.createNote).toHaveBeenCalledWith(
+      'access-token',
+      expect.objectContaining({ title: 'Quick Note' }),
+    );
+    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.body.version).toBe(2);
+  });
+
+  it('returns notes scoped to a folder', async () => {
+    const response = await sendJsonRequest('/api/v1/folders/folder-1/notes', {
+      method: 'GET',
+      headers: { authorization: 'Bearer access-token' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(contentService.listFolderNotes).toHaveBeenCalledWith('access-token', 'folder-1');
+    expect(response.body[0]?.folderId).toBe('folder-1');
+  });
+
+  it('returns forbidden for cross-user access rejection', async () => {
+    contentService.getKnowledgeBaseTree.mockRejectedValueOnce(
+      Object.assign(new Error('当前用户无权访问该资源。'), { statusCode: 403, code: 'forbidden' }),
+    );
+
+    const response = await sendJsonRequest('/api/v1/knowledge-bases/kb-2', {
+      method: 'GET',
+      headers: { authorization: 'Bearer access-token' },
+    });
+
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('forbidden');
+  });
+
+  it('returns deleted true for soft delete endpoints', async () => {
+    const response = await sendJsonRequest('/api/v1/notes/note-1', {
+      method: 'DELETE',
+      headers: { authorization: 'Bearer access-token' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(contentService.deleteNote).toHaveBeenCalledWith('access-token', 'note-1');
+    expect(response.body.deleted).toBe(true);
+  });
+
+  it('records sync events for note saves', async () => {
+    const response = await sendJsonRequest('/api/v1/sync-events', {
+      method: 'POST',
+      headers: { authorization: 'Bearer access-token' },
+      body: {
+        resourceType: 'note',
+        resourceId: 'note-1',
+        operation: 'upsert',
+        localVersion: 2,
+        cloudVersion: 2,
+        status: 'synced',
+        payload: { title: 'Saved Note' },
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(contentService.createSyncEvent).toHaveBeenCalledWith(
+      'access-token',
+      expect.objectContaining({ resourceId: 'note-1', status: 'synced' }),
+    );
+    expect(response.body.recorded).toBe(true);
+  });
+});
+
 async function sendJsonRequest(
   path: string,
   options: {
@@ -179,7 +341,7 @@ async function sendJsonRequest(
     headers?: Record<string, string>;
   },
 ) {
-  activeServer = createAppServer(logger, authService);
+  activeServer = createAppServer(logger, authService, contentService);
   await new Promise<void>((resolve) => activeServer?.listen(0, '127.0.0.1', resolve));
 
   const address = activeServer.address() as AddressInfo;

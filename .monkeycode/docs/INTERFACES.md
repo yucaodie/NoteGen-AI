@@ -80,6 +80,62 @@ Authorization: Bearer <access-token>
 X-Refresh-Token: <refresh-token>
 ```
 
+### Content
+
+- `GET /api/v1/knowledge-bases`
+- `POST /api/v1/knowledge-bases`
+- `GET /api/v1/knowledge-bases/:knowledgeBaseId`
+- `PATCH /api/v1/knowledge-bases/:knowledgeBaseId`
+- `DELETE /api/v1/knowledge-bases/:knowledgeBaseId`
+- `POST /api/v1/folders`
+- `PATCH /api/v1/folders/:folderId`
+- `DELETE /api/v1/folders/:folderId`
+- `GET /api/v1/folders/:folderId/notes`
+- `POST /api/v1/notes`
+- `PATCH /api/v1/notes/:noteId`
+- `DELETE /api/v1/notes/:noteId`
+
+上述接口统一需要请求头:
+
+```text
+Authorization: Bearer <access-token>
+```
+
+`GET /api/v1/knowledge-bases/:knowledgeBaseId` 返回最小工作区聚合结构:
+
+```json
+{
+  "knowledgeBase": {
+    "id": "kb-1",
+    "ownerUserId": "user-1",
+    "name": "My Knowledge Base",
+    "description": null
+  },
+  "folders": [
+    {
+      "id": "folder-1",
+      "ownerUserId": "user-1",
+      "knowledgeBaseId": "kb-1",
+      "parentFolderId": null,
+      "title": "Inbox",
+      "sortKey": "0001"
+    }
+  ],
+  "notes": [
+    {
+      "id": "note-1",
+      "ownerUserId": "user-1",
+      "knowledgeBaseId": "kb-1",
+      "folderId": "folder-1",
+      "title": "Quick Note",
+      "markdownContent": "# Hello",
+      "contentHash": "hash",
+      "version": 1
+    }
+  ]
+}
+```
+
 ## 已实现共享类型
 
 - `KnowledgeBase`
@@ -88,7 +144,16 @@ X-Refresh-Token: <refresh-token>
 - `AccessContext`
 - `AuthSession`
 - `AuthBootstrap`
+- `KnowledgeBaseTree`
 - `SyncMetadata`
+
+## 前端工作区状态
+
+- `WorkspaceRecoveryState`: 认证恢复、离线只读和未登录三种入口状态。
+- 本地草稿缓存键: `supanotegen.workspace.drafts`
+- 工作区本地会话缓存键:
+  - `supanotegen.auth.session`
+  - `supanotegen.workspace.bootstrap`
 
 这些类型定义位于 `packages/shared/src/index.ts`。
 

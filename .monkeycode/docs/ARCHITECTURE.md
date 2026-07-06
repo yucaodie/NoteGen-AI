@@ -2,8 +2,8 @@
 
 ## 系统分层
 
-- `apps/web`: Next.js 前端，负责首页、认证页、工作区壳层、浏览器端会话恢复与本地缓存回退。
-- `apps/api`: Node.js HTTP 服务，负责健康检查、认证接口和默认工作区初始化。
+- `apps/web`: Next.js 前端，负责首页、认证页、工作区、浏览器端会话恢复、本地草稿缓存与离线只读回退。
+- `apps/api`: Node.js HTTP 服务，负责健康检查、认证接口、默认工作区初始化和内容 CRUD API。
 - `supabase/migrations`: 数据库 schema、RLS policy 和权限辅助函数。
 - `packages/shared`: 前后端共享领域类型，包括知识库、认证会话、工作区引导数据和访问上下文。
 
@@ -22,8 +22,20 @@
 - Supabase PostgREST: `user_profiles`、`knowledge_bases`、`group_members` 等业务数据初始化与读取。
 - Supabase RLS: 私有资源访问约束、共享资源读写约束、后续 RAG 过滤基础。
 
+## 当前内容 API
+
+- `ContentService` 负责知识库、文件夹、笔记的增删改查，并在 API 层统一执行 owner 校验。
+- 知识库详情接口返回 `knowledgeBase + folders + notes` 的最小聚合结构，供后续前端树状工作区直接消费。
+- 软删除通过写入 `deleted_at` 实现，查询路径统一过滤 `deleted_at is null`。
+- 笔记更新时由 API 层统一递增 `version` 并刷新 `content_hash`，为后续同步状态机打基础。
+
+## 当前工作区前端
+
+- 工作区页面已经接入真实内容 API，支持知识库切换、文件夹筛选、笔记创建和 Markdown 保存。
+- 编辑器会为当前笔记保留本地草稿，刷新页面后优先用本地草稿覆盖云端内容显示。
+- 离线只读模式下继续展示缓存工作区，并保留本地草稿内容用于后续恢复。
+
 ## 关键约束
 
 - 当前 API 仍是轻量 HTTP server，路由通过 `apps/api/src/server.ts` 手工分发。
-- 前端工作区仍是壳层页面，知识库 CRUD 和同步逻辑会在后续任务补齐。
-- 离线模式当前只覆盖缓存读取与只读提示，真正同步状态机在任务 6 实现。
+- 当前工作区已经具备最小可用的树状浏览和编辑能力，真正的同步状态机在任务 6 实现。

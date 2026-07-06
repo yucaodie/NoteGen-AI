@@ -1,10 +1,12 @@
 import { createServer } from 'node:http';
 import type { AuthService } from './auth/service';
+import type { ContentService } from './content/service';
 import { getHealthResponse } from './routes/health';
 import { handleAuthError, handleAuthRoute } from './routes/auth';
+import { handleContentError, handleContentRoute } from './routes/content';
 import type { Logger } from './lib/logger';
 
-export function createAppServer(logger: Logger, authService?: AuthService) {
+export function createAppServer(logger: Logger, authService?: AuthService, contentService?: ContentService) {
   return createServer(async (request, response) => {
     const url = request.url ?? '/';
 
@@ -12,6 +14,13 @@ export function createAppServer(logger: Logger, authService?: AuthService) {
       if (authService) {
         const authResult = await handleAuthRoute(request, response, authService);
         if (authResult.handled) {
+          return;
+        }
+      }
+
+      if (contentService) {
+        const contentResult = await handleContentRoute(request, response, contentService);
+        if (contentResult.handled) {
           return;
         }
       }
@@ -25,6 +34,11 @@ export function createAppServer(logger: Logger, authService?: AuthService) {
     } catch (error) {
       if (url.startsWith('/auth/')) {
         handleAuthError(response, error);
+        return;
+      }
+
+      if (url.startsWith('/api/v1/')) {
+        handleContentError(response, error);
         return;
       }
 

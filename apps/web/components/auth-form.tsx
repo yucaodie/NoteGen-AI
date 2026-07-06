@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import type { AuthBootstrap, SignUpResult } from '@supanotegen/shared';
+import type { AuthBootstrap, PendingEmailConfirmation, SignUpResult } from '@supanotegen/shared';
 import { signIn, signUp } from '../lib/auth';
 import { saveStoredSession, saveStoredWorkspace } from '../lib/auth-storage';
 
@@ -112,6 +112,6 @@ export function AuthForm() {
   );
 }
 
-function isPendingEmailConfirmation(result: AuthBootstrap | SignUpResult) {
+function isPendingEmailConfirmation(result: AuthBootstrap | SignUpResult): result is PendingEmailConfirmation {
   return 'status' in result && result.status === 'pending_email_confirmation';
 }

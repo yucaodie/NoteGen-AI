@@ -221,6 +221,63 @@ button {
   align-items: flex-start;
 }
 
+.workspace-board {
+  display: grid;
+  gap: 20px;
+}
+
+.workspace-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workspace-item {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  border: 1px solid rgba(217, 207, 190, 0.7);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 14px;
+}
+
+.workspace-item.active {
+  border-color: rgba(31, 111, 95, 0.42);
+  background: rgba(31, 111, 95, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(31, 111, 95, 0.12);
+}
+
+.editor-panel {
+  min-height: 420px;
+}
+
+.editor-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.editor-input {
+  width: 100%;
+  min-height: 260px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  resize: vertical;
+  font: inherit;
+  line-height: 1.6;
+}
+
+.compact-actions {
+  margin-top: 0;
+  align-items: center;
+}
+
 @media (min-width: 900px) {
   .hero-grid {
     grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
@@ -229,5 +286,10 @@ button {
 
   .panel-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workspace-board {
+    grid-template-columns: 260px 260px minmax(0, 280px) minmax(0, 1fr);
+    align-items: start;
   }
 }

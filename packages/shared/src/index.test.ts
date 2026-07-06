@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { AccessContext, AppDescriptor, AuthBootstrap, PendingEmailConfirmation, SyncMetadata } from './index';
+import type {
+  AccessContext,
+  AppDescriptor,
+  AuthBootstrap,
+  KnowledgeBaseTree,
+  PendingEmailConfirmation,
+  SyncMetadata,
+} from './index';
 
 describe('shared domain contracts', () => {
   it('supports the base API descriptor shape', () => {
@@ -79,5 +86,56 @@ describe('shared domain contracts', () => {
 
     expect(pending.status).toBe('pending_email_confirmation');
     expect(pending.email).toContain('@');
+  });
+
+  it('supports knowledge base tree aggregates for workspace rendering', () => {
+    const tree: KnowledgeBaseTree = {
+      knowledgeBase: {
+        id: 'kb-1',
+        ownerUserId: 'user-1',
+        name: 'My Knowledge Base',
+        description: null,
+      },
+      folders: [
+        {
+          id: 'folder-1',
+          ownerUserId: 'user-1',
+          knowledgeBaseId: 'kb-1',
+          parentFolderId: null,
+          title: 'Inbox',
+          sortKey: '0001',
+        },
+      ],
+      notes: [
+        {
+          id: 'note-1',
+          ownerUserId: 'user-1',
+          knowledgeBaseId: 'kb-1',
+          folderId: 'folder-1',
+          title: 'Quick Note',
+          markdownContent: '# Hello',
+          contentHash: 'hash',
+          version: 1,
+        },
+      ],
+    };
+
+    expect(tree.folders[0]?.knowledgeBaseId).toBe(tree.knowledgeBase.id);
+    expect(tree.notes[0]?.folderId).toBe(tree.folders[0]?.id);
+  });
+
+  it('supports conflict records for sync convergence handling', () => {
+    const conflict = {
+      resourceId: 'note-1',
+      resourceType: 'note' as const,
+      localVersion: 2,
+      cloudVersion: 3,
+      localContentHash: 'local-hash',
+      cloudContentHash: 'cloud-hash',
+      createdAt: '2026-07-06T16:30:00.000Z',
+    };
+
+    expect(conflict.cloudVersion).toBeGreaterThan(conflict.localVersion);
+    expect(conflict.resourceType).toBe('note');
   });
 });

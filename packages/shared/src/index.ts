@@ -33,6 +33,12 @@ export type Note = {
   version: number;
 };
 
+export type KnowledgeBaseTree = {
+  knowledgeBase: KnowledgeBase;
+  folders: Folder[];
+  notes: Note[];
+};
+
 export type Group = {
   id: string;
   ownerUserId: string;
@@ -105,15 +111,28 @@ export type PendingEmailConfirmation = {
 
 export type SignUpResult = AuthBootstrap | PendingEmailConfirmation;
 
-export type AuthErrorCode =
+export type ApiErrorCode =
   | 'auth_failed'
   | 'session_expired'
   | 'network_error'
-  | 'invalid_request';
+  | 'invalid_request'
+  | 'forbidden'
+  | 'not_found'
+  | 'conflict';
 
 export type ApiErrorPayload = {
-  code: AuthErrorCode;
+  code: ApiErrorCode;
   message: string;
+};
+
+export type ConflictRecord = {
+  resourceId: string;
+  resourceType: 'knowledge_base' | 'folder' | 'note';
+  localVersion: number;
+  cloudVersion: number;
+  localContentHash: string;
+  cloudContentHash: string;
+  createdAt: string;
 };
 
 export type SyncMetadata = {

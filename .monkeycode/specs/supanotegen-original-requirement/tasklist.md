@@ -27,19 +27,19 @@
     - 验证注册、登录、登出和会话恢复成功路径
     - 验证认证失败和会话过期路径
 
-- [ ] 4. 实现知识库、文件夹和笔记的基础 CRUD API
+- [x] 4. 实现知识库、文件夹和笔记的基础 CRUD API
   - 在独立 API 服务中实现 `knowledge-bases`、`folders`、`notes` 相关 REST 接口，覆盖 Requirement 2 和设计中的 Knowledge Base Endpoints
   - 在服务端统一封装资源归属校验、软删除、版本号更新和错误响应，覆盖 Requirement 2.1、2.4 和 Correctness Property 1
   - 为知识库树和笔记读取返回前端所需的最小聚合结构，支撑 NoteGen 风格的树状导航体验，覆盖 Requirement 5 和 Requirement 6
-  - [ ]* 4.1 为知识库、文件夹和笔记 CRUD 编写 API 集成测试
+  - [x]* 4.1 为知识库、文件夹和笔记 CRUD 编写 API 集成测试
     - 验证创建、查询、更新、删除和软删除过滤
     - 验证跨用户访问被拒绝
 
-- [ ] 5. 实现浏览器端知识库树、编辑器工作区与草稿缓存
+- [x] 5. 实现浏览器端知识库树、编辑器工作区与草稿缓存
   - 构建知识库列表、树状目录、笔记详情和编辑器页面，复用 NoteGen 风格的信息架构，覆盖 Requirement 5
   - 实现 `WorkspaceState`、`DraftState` 和编辑器保存流程，使变更先进入浏览器缓存再进入同步队列，覆盖 Requirement 5.1、5.2
   - 增加弱网状态提示、草稿恢复和最近访问数据恢复逻辑，覆盖 Requirement 5.1 和设计中的前端错误处理要求
-  - [ ]* 5.1 为浏览器缓存、草稿恢复和工作区状态编写前端测试
+  - [x]* 5.1 为浏览器缓存、草稿恢复和工作区状态编写前端测试
     - 验证刷新页面后草稿恢复
     - 验证弱网状态下编辑内容保留
 
@@ -47,9 +47,9 @@
   - 实现 `SyncService.enqueue`、同步状态机、重试机制和 `sync_events` 写入逻辑，覆盖 Requirement 5.2、5.3、5.4
   - 实现应用启动、页面切换和 Realtime 触发的增量拉取与合并逻辑，覆盖 Requirement 6.1、6.2、6.4
   - 实现基于 `version + content_hash` 的冲突检测与 `ConflictRecord` 生成逻辑，覆盖 Requirement 6.3 和 Correctness Property 5
-  - [ ]* 6.1 为同步状态机编写单元测试
+  - [x]* 6.1 为同步状态机编写单元测试
     - 验证新增、更新、删除、失败重试和成功收敛路径
-  - [ ]* 6.2 为冲突检测与合并策略编写属性测试
+  - [x]* 6.2 为冲突检测与合并策略编写属性测试
     - 依据 Correctness Property 5 验证同步结果只能收敛到 `synced`、`conflict` 或 `failed`
     - 验证较新的云端版本会触发冲突记录创建
 

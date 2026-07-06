@@ -26,18 +26,29 @@ npm run test:ui
 - 前端关键点击路径需要保持可执行 UI 回归测试。
 - 新增认证相关逻辑优先走 API 层统一封装，再由前端消费。
 - 会话恢复失败时优先保持本地缓存可读，避免工作区入口直接中断。
+- 内容读写统一经过 API 层 `ContentService`，由服务端执行 owner 校验、软删除过滤和笔记版本递增。
+- 工作区前端通过 `apps/web/lib/content.ts` 调用内容 API，并通过 `apps/web/lib/draft-storage.ts` 管理本地草稿。
 
 ## 认证实现位置
 
 - API 认证服务: `apps/api/src/auth/service.ts`
 - API 认证路由: `apps/api/src/routes/auth.ts`
+- API 内容服务: `apps/api/src/content/service.ts`
+- API 内容路由: `apps/api/src/routes/content.ts`
 - 前端认证请求: `apps/web/lib/auth.ts`
+- 前端内容请求: `apps/web/lib/content.ts`
+- 前端草稿缓存: `apps/web/lib/draft-storage.ts`
+- 前端工作区内容辅助: `apps/web/lib/workspace-content.ts`
 - 前端本地会话存储: `apps/web/lib/auth-storage.ts`
 - 前端恢复策略: `apps/web/lib/workspace-session.ts`
 
 ## 测试覆盖
 
 - `apps/api/src/server.test.ts`: 认证接口成功、失败、会话恢复和登出。
+- `apps/api/src/content/service.test.ts`: 知识库树聚合、笔记版本递增和跨用户访问拒绝。
 - `apps/api/src/supabase/migrations.test.ts`: 核心迁移结构与 RLS 关键片段。
+- `apps/web/lib/content.test.ts`: 前端内容 API 请求封装。
+- `apps/web/lib/draft-storage.test.ts`: 草稿持久化与清理。
+- `apps/web/lib/workspace-content.test.ts`: 目录筛选、草稿覆盖与树结构更新。
 - `apps/web/lib/workspace-session.test.ts`: 会话恢复、会话过期、离线缓存回退。
 - `apps/web/tests/ui/home.spec.ts`: 首页关键导航点击路径。
