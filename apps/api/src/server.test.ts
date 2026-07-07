@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AddressInfo } from 'node:net';
-import type { AuthBootstrap, Folder, KnowledgeBase, KnowledgeBaseTree, Note } from '@supanotegen/shared';
+import type { AuthBootstrap, Folder, KnowledgeBase, KnowledgeBaseTree, Note, SyncEventRecord } from '@supanotegen/shared';
 import { createAppServer } from './server';
 
 const logger = {
@@ -82,6 +82,18 @@ const knowledgeBaseTreeFixture: KnowledgeBaseTree = {
   notes: [noteFixture],
 };
 
+const syncEventFixture: SyncEventRecord = {
+  id: 'event-1',
+  resourceId: 'note-1',
+  resourceType: 'note',
+  operation: 'upsert',
+  localVersion: 2,
+  cloudVersion: 2,
+  status: 'synced',
+  payload: { knowledgeBaseId: 'kb-1' },
+  createdAt: '2026-07-07T16:42:00.000Z',
+};
+
 const contentService = {
   listKnowledgeBases: vi.fn(async () => [knowledgeBaseFixture]),
   createKnowledgeBase: vi.fn(async () => knowledgeBaseFixture),
@@ -96,6 +108,7 @@ const contentService = {
   updateNote: vi.fn(async () => ({ ...noteFixture, title: 'Renamed Note', version: 2 })),
   deleteNote: vi.fn(async () => undefined),
   createSyncEvent: vi.fn(async () => undefined),
+  listSyncEvents: vi.fn(async () => [syncEventFixture]),
 };
 
 let activeServer: ReturnType<typeof createAppServer> | undefined;
@@ -331,6 +344,20 @@ describe('createAppServer content routes', () => {
     );
     expect(response.body.recorded).toBe(true);
   });
+
+  it('lists sync events for incremental refresh checks', async () => {
+    const response = await sendJsonRequest('/api/v1/sync-events?since=2026-07-07T16:40:00.000Z&limit=5', {
+      method: 'GET',
+      headers: { authorization: 'Bearer access-token' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(contentService.listSyncEvents).toHaveBeenCalledWith('access-token', {
+      since: '2026-07-07T16:40:00.000Z',
+      limit: 5,
+    });
+    expect(Array.isArray(response.body)).toBe(true);
+  });
 });
 
 async function sendJsonRequest(
@@ -356,6 +383,6 @@ async function sendJsonRequest(
 
   return {
     status: response.status,
-    body: (await response.json()) as Record<string, any>,
+    body: (await response.json()) as Record<string, any> | Array<Record<string, any>>,
   };
 }

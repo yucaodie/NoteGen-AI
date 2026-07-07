@@ -1,4 +1,4 @@
-import type { Folder, KnowledgeBase, KnowledgeBaseTree, Note } from '@supanotegen/shared';
+import type { Folder, KnowledgeBase, KnowledgeBaseTree, Note, SyncEventRecord } from '@supanotegen/shared';
 import type { AuthSession } from '@supanotegen/shared';
 import { AuthApiError } from './auth';
 import { getApiUrl } from './api';
@@ -118,6 +118,28 @@ export async function createSyncEvent(
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     },
+    fetchImpl,
+  );
+}
+
+export async function listSyncEvents(
+  session: AuthSession,
+  options: { since?: string; limit?: number },
+  fetchImpl: FetchLike = fetch,
+): Promise<SyncEventRecord[]> {
+  const searchParams = new URLSearchParams();
+  if (options.since) {
+    searchParams.set('since', options.since);
+  }
+  if (options.limit !== undefined) {
+    searchParams.set('limit', String(options.limit));
+  }
+
+  const query = searchParams.toString();
+  return request<SyncEventRecord[]>(
+    session,
+    query.length > 0 ? `/api/v1/sync-events?${query}` : '/api/v1/sync-events',
+    { method: 'GET' },
     fetchImpl,
   );
 }

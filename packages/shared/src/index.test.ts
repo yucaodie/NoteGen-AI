@@ -5,6 +5,7 @@ import type {
   AuthBootstrap,
   KnowledgeBaseTree,
   PendingEmailConfirmation,
+  SyncEventRecord,
   SyncMetadata,
 } from './index';
 
@@ -137,5 +138,22 @@ describe('shared domain contracts', () => {
 
     expect(conflict.cloudVersion).toBeGreaterThan(conflict.localVersion);
     expect(conflict.resourceType).toBe('note');
+  });
+
+  it('supports sync event records for incremental refresh checks', () => {
+    const syncEvent: SyncEventRecord = {
+      id: 'event-1',
+      resourceId: 'note-1',
+      resourceType: 'note',
+      operation: 'upsert',
+      localVersion: 3,
+      cloudVersion: 3,
+      status: 'synced',
+      payload: { knowledgeBaseId: 'kb-1' },
+      createdAt: '2026-07-07T16:40:00.000Z',
+    };
+
+    expect(syncEvent.payload.knowledgeBaseId).toBe('kb-1');
+    expect(syncEvent.operation).toBe('upsert');
   });
 });

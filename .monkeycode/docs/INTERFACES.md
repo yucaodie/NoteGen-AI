@@ -94,6 +94,8 @@ X-Refresh-Token: <refresh-token>
 - `POST /api/v1/notes`
 - `PATCH /api/v1/notes/:noteId`
 - `DELETE /api/v1/notes/:noteId`
+- `POST /api/v1/sync-events`
+- `GET /api/v1/sync-events?since=<iso>&limit=<n>`
 
 上述接口统一需要请求头:
 
@@ -136,6 +138,26 @@ Authorization: Bearer <access-token>
 }
 ```
 
+`GET /api/v1/sync-events` 返回增量同步事件数组:
+
+```json
+[
+  {
+    "id": "event-1",
+    "resourceId": "note-1",
+    "resourceType": "note",
+    "operation": "upsert",
+    "localVersion": 3,
+    "cloudVersion": 3,
+    "status": "synced",
+    "payload": {
+      "knowledgeBaseId": "kb-1"
+    },
+    "createdAt": "2026-07-07T16:45:00.000Z"
+  }
+]
+```
+
 ## 已实现共享类型
 
 - `KnowledgeBase`
@@ -146,6 +168,7 @@ Authorization: Bearer <access-token>
 - `AuthBootstrap`
 - `KnowledgeBaseTree`
 - `SyncMetadata`
+- `SyncEventRecord`
 
 ## 前端工作区状态
 

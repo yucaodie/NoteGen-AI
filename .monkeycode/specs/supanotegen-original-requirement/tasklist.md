@@ -43,7 +43,7 @@
     - 验证刷新页面后草稿恢复
     - 验证弱网状态下编辑内容保留
 
-- [ ] 6. 实现 SyncService 与多端增量同步流程
+- [x] 6. 实现 SyncService 与多端增量同步流程
   - 实现 `SyncService.enqueue`、同步状态机、重试机制和 `sync_events` 写入逻辑，覆盖 Requirement 5.2、5.3、5.4
   - 实现应用启动、页面切换和 Realtime 触发的增量拉取与合并逻辑，覆盖 Requirement 6.1、6.2、6.4
   - 实现基于 `version + content_hash` 的冲突检测与 `ConflictRecord` 生成逻辑，覆盖 Requirement 6.3 和 Correctness Property 5

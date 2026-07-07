@@ -213,6 +213,45 @@ describe('createContentService', () => {
       payload: { title: 'Pending Note' },
     });
   });
+
+  it('lists sync events newer than a given cursor', async () => {
+    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+      const url = input.toString();
+
+      if (url.endsWith('/auth/v1/user')) {
+        return jsonResponse({ id: 'user-1', email: 'user@example.com' });
+      }
+
+      if (url.includes('/rest/v1/sync_events?') && init?.method === 'GET') {
+        expect(url).toContain('created_at=gt.2026-07-07T16%3A30%3A00.000Z');
+        expect(url).toContain('limit=10');
+        return jsonResponse([
+          {
+            id: 'event-1',
+            resource_type: 'note',
+            resource_id: 'note-1',
+            operation: 'upsert',
+            local_version: 3,
+            cloud_version: 3,
+            status: 'synced',
+            payload: { knowledgeBaseId: 'kb-1' },
+            created_at: '2026-07-07T16:31:00.000Z',
+          },
+        ]);
+      }
+
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    const service = createContentService(env, fetchMock as typeof fetch);
+    const events = await service.listSyncEvents('access-token', {
+      since: '2026-07-07T16:30:00.000Z',
+      limit: 10,
+    });
+
+    expect(events[0]?.payload.knowledgeBaseId).toBe('kb-1');
+    expect(events[0]?.resourceType).toBe('note');
+  });
 });
 
 function jsonResponse(body: unknown, init?: { status?: number }) {

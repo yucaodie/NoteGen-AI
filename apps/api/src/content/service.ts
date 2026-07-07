@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { Folder, KnowledgeBase, KnowledgeBaseTree, Note } from '@supanotegen/shared';
+import type { Folder, KnowledgeBase, KnowledgeBaseTree, Note, SyncEventRecord } from '@supanotegen/shared';
 import type { ApiEnv } from '../config/env';
 
 type FetchLike = typeof fetch;
@@ -51,6 +51,23 @@ type SyncEventInput = {
   cloudVersion: number | null;
   status: 'synced' | 'pending' | 'conflict' | 'failed';
   payload: Record<string, unknown>;
+};
+
+type ListSyncEventsInput = {
+  since?: string;
+  limit?: number;
+};
+
+type SyncEventRow = {
+  id: string;
+  resource_type: 'knowledge_base' | 'folder' | 'note';
+  resource_id: string;
+  operation: 'upsert' | 'delete';
+  local_version: number;
+  cloud_version: number | null;
+  status: 'synced' | 'pending' | 'conflict' | 'failed';
+  payload: Record<string, unknown>;
+  created_at: string;
 };
 
 type CreateKnowledgeBaseInput = {
@@ -109,6 +126,7 @@ export type ContentService = {
   updateNote: (accessToken: string, noteId: string, input: UpdateNoteInput) => Promise<Note>;
   deleteNote: (accessToken: string, noteId: string) => Promise<void>;
   createSyncEvent: (accessToken: string, input: SyncEventInput) => Promise<void>;
+  listSyncEvents: (accessToken: string, input: ListSyncEventsInput) => Promise<SyncEventRecord[]>;
 };
 
 export function createContentService(env: ApiEnv, fetchImpl: FetchLike = fetch): ContentService {
@@ -368,6 +386,24 @@ export function createContentService(env: ApiEnv, fetchImpl: FetchLike = fetch):
     });
   }
 
+  async function listSyncEvents(accessToken: string, input: ListSyncEventsInput): Promise<SyncEventRecord[]> {
+    const user = await getUser(accessToken);
+    const limit = Math.min(Math.max(input.limit ?? 20, 1), 100);
+    const filters = [
+      `owner_user_id=eq.${encodeURIComponent(user.id)}`,
+      'select=id,resource_type,resource_id,operation,local_version,cloud_version,status,payload,created_at',
+      'order=created_at.desc',
+      `limit=${limit}`,
+    ];
+
+    if (input.since) {
+      filters.unshift(`created_at=gt.${encodeURIComponent(input.since)}`);
+    }
+
+    const rows = await restRequest<SyncEventRow[]>(`sync_events?${filters.join('&')}`, { method: 'GET' });
+    return rows.map(mapSyncEventRecord);
+  }
+
   async function getUser(accessToken: string): Promise<SupabaseAuthUser> {
     const response = await fetchImpl(new URL('user', authBaseUrl), {
       headers: {
@@ -485,6 +521,7 @@ export function createContentService(env: ApiEnv, fetchImpl: FetchLike = fetch):
     updateNote,
     deleteNote,
     createSyncEvent,
+    listSyncEvents,
   };
 }
 
@@ -518,6 +555,20 @@ function mapNote(row: NoteRow): Note {
     markdownContent: row.markdown_content,
     contentHash: row.content_hash,
     version: row.version,
+  };
+}
+
+function mapSyncEventRecord(row: SyncEventRow): SyncEventRecord {
+  return {
+    id: row.id,
+    resourceId: row.resource_id,
+    resourceType: row.resource_type,
+    operation: row.operation,
+    localVersion: row.local_version,
+    cloudVersion: row.cloud_version,
+    status: row.status,
+    payload: row.payload,
+    createdAt: row.created_at,
   };
 }
 

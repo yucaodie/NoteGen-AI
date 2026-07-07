@@ -1,4 +1,4 @@
-import type { ApiErrorPayload, Folder, KnowledgeBase, KnowledgeBaseTree, Note } from '@supanotegen/shared';
+import type { ApiErrorPayload, Folder, KnowledgeBase, KnowledgeBaseTree, Note, SyncEventRecord } from '@supanotegen/shared';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ContentService } from '../content/service';
 
@@ -98,6 +98,18 @@ export async function handleContentRoute(
     return { handled: true };
   }
 
+  if (method === 'GET' && pathname === '/api/v1/sync-events') {
+    sendJson(
+      response,
+      200,
+      await contentService.listSyncEvents(accessToken!, {
+        since: url.searchParams.get('since') ?? undefined,
+        limit: url.searchParams.get('limit') ? Number(url.searchParams.get('limit')) : undefined,
+      }),
+    );
+    return { handled: true };
+  }
+
   const noteMatch = pathname.match(/^\/api\/v1\/notes\/([^/]+)$/);
   if (noteMatch) {
     const noteId = decodeURIComponent(noteMatch[1]!);
@@ -192,6 +204,7 @@ function sendJson(
     | Folder
     | Note[]
     | Note
+    | SyncEventRecord[]
     | ApiErrorPayload
     | { deleted: boolean }
     | { recorded: boolean },

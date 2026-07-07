@@ -30,6 +30,17 @@ export function saveConflictRecord(record: ConflictRecord, storage: BrowserStora
   storage.setItem(CONFLICT_STORAGE_KEY, JSON.stringify(records));
 }
 
+export function removeConflictRecord(resourceId: string, storage: BrowserStorage = getBrowserStorage()) {
+  const records = loadConflictRecords(storage).filter((item) => item.resourceId !== resourceId);
+
+  if (records.length === 0) {
+    storage.removeItem(CONFLICT_STORAGE_KEY);
+    return;
+  }
+
+  storage.setItem(CONFLICT_STORAGE_KEY, JSON.stringify(records));
+}
+
 function readJson<T>(storage: BrowserStorage, key: string): T | null {
   const rawValue = storage.getItem(key);
   if (!rawValue) {

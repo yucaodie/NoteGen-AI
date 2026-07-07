@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { loadAllSyncMetadata, loadConflictRecords, loadSyncMetadata, saveConflictRecord, saveSyncMetadata } from './sync-storage';
+import {
+  loadAllSyncMetadata,
+  loadConflictRecords,
+  loadSyncMetadata,
+  removeConflictRecord,
+  saveConflictRecord,
+  saveSyncMetadata,
+} from './sync-storage';
 
 describe('sync-storage', () => {
   it('stores sync metadata by resource id', () => {
@@ -40,6 +47,27 @@ describe('sync-storage', () => {
     );
 
     expect(loadConflictRecords(storage)[0]?.resourceId).toBe('note-1');
+  });
+
+  it('removes a resolved conflict record by resource id', () => {
+    const storage = createMemoryStorage();
+
+    saveConflictRecord(
+      {
+        resourceId: 'note-1',
+        resourceType: 'note',
+        localVersion: 2,
+        cloudVersion: 3,
+        localContentHash: 'local',
+        cloudContentHash: 'cloud',
+        createdAt: '2026-07-06T16:30:00.000Z',
+      },
+      storage,
+    );
+
+    removeConflictRecord('note-1', storage);
+
+    expect(loadConflictRecords(storage)).toHaveLength(0);
   });
 });
 

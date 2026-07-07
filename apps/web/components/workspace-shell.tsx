@@ -10,6 +10,7 @@ import {
   createNote,
   createSyncEvent,
   getKnowledgeBaseTree,
+  listSyncEvents,
   listKnowledgeBases,
   updateNote,
 } from '../lib/content';
@@ -22,10 +23,18 @@ import {
 } from '../lib/auth-storage';
 import { clearDraft, loadDraft, saveDraft } from '../lib/draft-storage';
 import { createSyncService, type SyncService, buildSyncContentHash } from '../lib/sync-service';
-import { loadAllSyncMetadata, loadConflictRecords, loadSyncMetadata, saveConflictRecord, saveSyncMetadata } from '../lib/sync-storage';
+import {
+  loadAllSyncMetadata,
+  loadConflictRecords,
+  loadSyncMetadata,
+  removeConflictRecord,
+  saveConflictRecord,
+  saveSyncMetadata,
+} from '../lib/sync-storage';
 import { countPendingSyncItems, describeConflict, formatSyncStatus } from '../lib/workspace-sync';
 import { buildNextTree, buildNextTreeWithFolder, getVisibleNotes, mergeNoteWithDraft, sortFolders } from '../lib/workspace-content';
 import { recoverWorkspaceSessionState, type WorkspaceRecoveryState } from '../lib/workspace-session';
+import { createRealtimeSyncSubscription } from '../lib/realtime-sync';
 
 export function WorkspaceShell() {
   const [state, setState] = useState<WorkspaceRecoveryState | null>(null);
@@ -43,6 +52,8 @@ export function WorkspaceShell() {
   const syncServiceRef = useRef<SyncService | null>(null);
   const sessionRef = useRef<AuthBootstrap['session'] | null>(null);
   const broadcastRef = useRef<BroadcastChannel | null>(null);
+  const syncCursorRef = useRef<string | null>(null);
+  const realtimeRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
     setSyncMetadataMap(loadAllSyncMetadata());
@@ -89,7 +100,7 @@ export function WorkspaceShell() {
       }
 
       if (payload.knowledgeBaseId === selectedKnowledgeBaseId) {
-        void refreshKnowledgeBaseTree(state.bootstrap, payload.knowledgeBaseId);
+        void refreshKnowledgeBaseTree(state.bootstrap, payload.knowledgeBaseId, true);
       }
     };
 
@@ -97,6 +108,33 @@ export function WorkspaceShell() {
       channel.close();
       broadcastRef.current = null;
     };
+  }, [selectedKnowledgeBaseId, state]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !state || state.kind !== 'authenticated') {
+      return;
+    }
+
+    return createRealtimeSyncSubscription({
+      accessToken: state.bootstrap.session.accessToken,
+      onKnowledgeBaseChange: (knowledgeBaseId) => {
+        if (knowledgeBaseId !== selectedKnowledgeBaseId || realtimeRefreshInFlightRef.current) {
+          return;
+        }
+
+        realtimeRefreshInFlightRef.current = true;
+        void refreshKnowledgeBaseTree(state.bootstrap, knowledgeBaseId, true)
+          .then(() => {
+            setWorkspaceMessage('已接收云端实时变更。');
+          })
+          .catch((error) => {
+            setWorkspaceMessage(error instanceof Error ? error.message : '实时同步刷新失败。');
+          })
+          .finally(() => {
+            realtimeRefreshInFlightRef.current = false;
+          });
+      },
+    });
   }, [selectedKnowledgeBaseId, state]);
 
   useEffect(() => {
@@ -183,8 +221,8 @@ export function WorkspaceShell() {
       }
 
       void refreshKnowledgeBaseTree(state.bootstrap, selectedKnowledgeBaseId)
-        .then(() => {
-          setWorkspaceMessage('已刷新当前知识库的云端状态。');
+        .then((changed) => {
+          setWorkspaceMessage(changed ? '已刷新当前知识库的云端状态。' : '当前知识库没有新的云端变更。');
         })
         .catch((error) => {
           setWorkspaceMessage(error instanceof Error ? error.message : '刷新云端状态失败。');
@@ -235,6 +273,7 @@ export function WorkspaceShell() {
   const bootstrap = state.bootstrap;
   const currentNote = selectedNoteId ? tree?.notes.find((note) => note.id === selectedNoteId) ?? null : null;
   const currentSyncMetadata = currentNote ? syncMetadataMap[currentNote.id] ?? null : null;
+  const activeConflict = currentNote ? conflicts.find((record) => record.resourceId === currentNote.id) ?? null : null;
   const pendingSyncCount = countPendingSyncItems(syncMetadataMap);
   const visibleNotes = tree ? getVisibleNotes(tree, selectedFolderId) : [];
   const visibleFolders = tree ? sortFolders(tree.folders) : [];
@@ -513,6 +552,7 @@ export function WorkspaceShell() {
                           cloudVersion: currentNote.version,
                           contentHash: buildSyncContentHash(`${noteTitle}\n${noteContent}`),
                           payload: {
+                            knowledgeBaseId: currentNote.knowledgeBaseId,
                             title: noteTitle,
                             markdownContent: noteContent,
                             folderId: currentNote.folderId,
@@ -594,6 +634,42 @@ export function WorkspaceShell() {
 
         <article className="panel-card">
           <h2 className="panel-title">同步冲突</h2>
+          {activeConflict && state.kind === 'authenticated' && currentNote ? (
+            <div className="cta-row compact-actions">
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={isPending}
+                onClick={() => {
+                  startTransition(async () => {
+                    try {
+                      await adoptCloudVersion(activeConflict);
+                    } catch (error) {
+                      setWorkspaceMessage(error instanceof Error ? error.message : '采用云端版本失败。');
+                    }
+                  });
+                }}
+              >
+                采用云端版本
+              </button>
+              <button
+                className="primary-button"
+                type="button"
+                disabled={isPending}
+                onClick={() => {
+                  startTransition(async () => {
+                    try {
+                      await keepLocalVersion(activeConflict);
+                    } catch (error) {
+                      setWorkspaceMessage(error instanceof Error ? error.message : '重新提交本地版本失败。');
+                    }
+                  });
+                }}
+              >
+                保留本地并重提
+              </button>
+            </div>
+          ) : null}
           {conflicts.length > 0 ? (
             <ul className="workspace-list">
               {conflicts.slice(0, 5).map((record) => (
@@ -654,12 +730,20 @@ export function WorkspaceShell() {
     return syncServiceRef.current;
   }
 
-  async function refreshKnowledgeBaseTree(bootstrapState: AuthBootstrap, knowledgeBaseId: string) {
+  async function refreshKnowledgeBaseTree(bootstrapState: AuthBootstrap, knowledgeBaseId: string, force = false) {
+    if (!force) {
+      const hasChanges = await hasRemoteChangesForKnowledgeBase(bootstrapState, knowledgeBaseId);
+      if (!hasChanges) {
+        return false;
+      }
+    }
+
     const nextTree = await getKnowledgeBaseTree(bootstrapState.session, knowledgeBaseId);
     setTree(nextTree);
+    syncCursorRef.current = new Date().toISOString();
 
     if (!selectedNoteId) {
-      return;
+      return true;
     }
 
     const refreshedCurrentNote = nextTree.notes.find((note) => note.id === selectedNoteId) ?? null;
@@ -668,12 +752,34 @@ export function WorkspaceShell() {
       if (fallbackNote) {
         selectNote(fallbackNote);
       }
-      return;
+      return true;
     }
 
     const mergedNote = mergeNoteWithDraft(refreshedCurrentNote, loadDraft(refreshedCurrentNote.id));
     setNoteTitle(mergedNote.title);
     setNoteContent(mergedNote.markdownContent);
+    return true;
+  }
+
+  async function hasRemoteChangesForKnowledgeBase(bootstrapState: AuthBootstrap, knowledgeBaseId: string) {
+    const events = await listSyncEvents(bootstrapState.session, {
+      since: syncCursorRef.current ?? undefined,
+      limit: 20,
+    });
+
+    if (events.length === 0) {
+      return false;
+    }
+
+    syncCursorRef.current = events[0]?.createdAt ?? syncCursorRef.current;
+
+    return events.some((event) => {
+      if (event.resourceType === 'knowledge_base') {
+        return event.resourceId === knowledgeBaseId;
+      }
+
+      return event.payload.knowledgeBaseId === knowledgeBaseId;
+    });
   }
 
   async function hydrateWorkspace(bootstrapState: AuthBootstrap) {
@@ -692,6 +798,7 @@ export function WorkspaceShell() {
 
     const nextTree = await getKnowledgeBaseTree(bootstrapState.session, defaultKnowledgeBaseId);
     setTree(nextTree);
+    syncCursorRef.current = new Date().toISOString();
     setSelectedFolderId(null);
 
     const firstNote = getVisibleNotes(nextTree, null)[0] ?? null;
@@ -705,5 +812,126 @@ export function WorkspaceShell() {
       setNoteTitle('');
       setNoteContent('');
     }
+  }
+
+  async function adoptCloudVersion(record: ConflictRecord) {
+    if (!selectedKnowledgeBaseId) {
+      throw new Error('当前没有可刷新的知识库。');
+    }
+
+    clearDraft(record.resourceId);
+    const nextTree = await getKnowledgeBaseTree(bootstrap.session, selectedKnowledgeBaseId);
+    const cloudNote = nextTree.notes.find((note) => note.id === record.resourceId) ?? null;
+    setTree(nextTree);
+    syncCursorRef.current = new Date().toISOString();
+    removeConflictRecord(record.resourceId);
+    setConflicts(loadConflictRecords());
+
+    if (!cloudNote) {
+      setSelectedNoteId(null);
+      setNoteTitle('');
+      setNoteContent('');
+      setWorkspaceMessage('已采用云端结果，原冲突笔记已不在当前知识库中。');
+      return;
+    }
+
+    setSelectedNoteId(cloudNote.id);
+    setNoteTitle(cloudNote.title);
+    setNoteContent(cloudNote.markdownContent);
+    const metadata: SyncMetadata = {
+      resourceId: cloudNote.id,
+      resourceType: 'note',
+      localVersion: cloudNote.version,
+      cloudVersion: cloudNote.version,
+      syncStatus: 'synced',
+      contentHash: cloudNote.contentHash,
+      lastSyncedAt: new Date().toISOString(),
+      tombstone: false,
+    };
+    saveSyncMetadata(metadata);
+    setSyncMetadataMap((currentMap) => ({ ...currentMap, [cloudNote.id]: metadata }));
+    setWorkspaceMessage('已采用云端版本并清除冲突。');
+  }
+
+  async function keepLocalVersion(record: ConflictRecord) {
+    if (!selectedKnowledgeBaseId || !currentNote) {
+      throw new Error('请先选中发生冲突的笔记。');
+    }
+
+    const localTitle = noteTitle;
+    const localContent = noteContent;
+    const nextTree = await getKnowledgeBaseTree(bootstrap.session, selectedKnowledgeBaseId);
+    const cloudNote = nextTree.notes.find((note) => note.id === record.resourceId) ?? null;
+
+    if (!cloudNote) {
+      throw new Error('云端已找不到这条冲突笔记。');
+    }
+
+    setTree(nextTree);
+    syncCursorRef.current = new Date().toISOString();
+    setSelectedNoteId(cloudNote.id);
+    setNoteTitle(localTitle);
+    setNoteContent(localContent);
+    saveDraft({
+      noteId: cloudNote.id,
+      title: localTitle,
+      markdownContent: localContent,
+      savedAt: new Date().toISOString(),
+    });
+
+    const metadata = await getSyncService().enqueue({
+      resourceId: cloudNote.id,
+      resourceType: 'note',
+      localVersion: Math.max(record.localVersion, cloudNote.version) + 1,
+      cloudVersion: cloudNote.version,
+      contentHash: buildSyncContentHash(`${localTitle}\n${localContent}`),
+      payload: {
+        knowledgeBaseId: cloudNote.knowledgeBaseId,
+        title: localTitle,
+        markdownContent: localContent,
+        folderId: cloudNote.folderId,
+      },
+      execute: async () => {
+        const saved = await updateNote(bootstrap.session, cloudNote.id, {
+          title: localTitle,
+          markdownContent: localContent,
+          folderId: cloudNote.folderId,
+          expectedVersion: cloudNote.version,
+          expectedContentHash: cloudNote.contentHash,
+        });
+        setTree((currentTree) => (currentTree ? buildNextTree(currentTree, saved) : currentTree));
+        setSelectedNoteId(saved.id);
+        setNoteTitle(saved.title);
+        setNoteContent(saved.markdownContent);
+        clearDraft(saved.id);
+        broadcastRef.current?.postMessage({
+          type: 'note-synced',
+          knowledgeBaseId: saved.knowledgeBaseId,
+        });
+        return {
+          cloudVersion: saved.version,
+          contentHash: saved.contentHash,
+        };
+      },
+    });
+
+    if (metadata.syncStatus === 'synced') {
+      removeConflictRecord(record.resourceId);
+      setConflicts(loadConflictRecords());
+      setWorkspaceMessage('已基于最新云端版本重新提交本地内容。');
+      return;
+    }
+
+    if (metadata.syncStatus === 'pending') {
+      setWorkspaceMessage('网络暂不可用，本地版本已重新进入待同步队列。');
+      return;
+    }
+
+    if (metadata.syncStatus === 'conflict') {
+      setWorkspaceMessage('云端内容再次变化，冲突记录已更新。');
+      return;
+    }
+
+    setWorkspaceMessage('重新提交本地版本失败，请稍后再试。');
   }
 }

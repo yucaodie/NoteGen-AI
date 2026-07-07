@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getKnowledgeBaseTree, updateNote } from './content';
+import { getKnowledgeBaseTree, listSyncEvents, updateNote } from './content';
 
 const session = {
   accessToken: 'access-token',
@@ -67,6 +67,39 @@ describe('content api client', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/v1/notes/note-1'),
       expect.objectContaining({ method: 'PATCH' }),
+    );
+  });
+
+  it('loads incremental sync events with an optional cursor', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify([
+          {
+            id: 'event-1',
+            resourceId: 'note-1',
+            resourceType: 'note',
+            operation: 'upsert',
+            localVersion: 2,
+            cloudVersion: 2,
+            status: 'synced',
+            payload: { knowledgeBaseId: 'kb-1' },
+            createdAt: '2026-07-07T16:45:00.000Z',
+          },
+        ]),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+
+    const events = await listSyncEvents(
+      session,
+      { since: '2026-07-07T16:40:00.000Z', limit: 5 },
+      fetchMock as typeof fetch,
+    );
+
+    expect(events[0]?.resourceId).toBe('note-1');
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/v1/sync-events?since=2026-07-07T16%3A40%3A00.000Z&limit=5'),
+      expect.objectContaining({ method: 'GET' }),
     );
   });
 });

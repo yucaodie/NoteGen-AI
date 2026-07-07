@@ -145,3 +145,15 @@ export type SyncMetadata = {
   lastSyncedAt: string | null;
   tombstone: boolean;
 };
+
+export type SyncEventRecord = {
+  id: string;
+  resourceId: string;
+  resourceType: 'knowledge_base' | 'folder' | 'note';
+  operation: 'upsert' | 'delete';
+  localVersion: number;
+  cloudVersion: number | null;
+  status: 'synced' | 'pending' | 'conflict' | 'failed';
+  payload: Record<string, unknown>;
+  createdAt: string;
+};
