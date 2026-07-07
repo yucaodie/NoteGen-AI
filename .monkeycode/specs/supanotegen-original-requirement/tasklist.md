@@ -53,14 +53,14 @@
     - 依据 Correctness Property 5 验证同步结果只能收敛到 `synced`、`conflict` 或 `failed`
     - 验证较新的云端版本会触发冲突记录创建
 
-- [ ] 7. 检查点 - 确保所有测试通过
+- [x] 7. 检查点 - 确保所有测试通过
   - 确保所有测试通过,如有疑问请询问用户
 
-- [ ] 8. 实现群组、邀请、成员管理与共享关系 API
+- [x] 8. 实现群组、邀请、成员管理与共享关系 API
   - 实现 `groups`、`group_invitations`、`group_members`、`shares` 相关接口，覆盖 Requirement 3 和 Requirement 4
   - 实现群组创建者权限、邀请接受流程和共享关系创建逻辑，覆盖 Requirement 3.1、3.2、3.3、4.1、4.2
   - 在服务端增加共享资源的读写权限校验，覆盖 Requirement 4.3、4.4 和 Correctness Property 2
-  - [ ]* 8.1 为群组与共享接口编写集成测试
+  - [x]* 8.1 为群组与共享接口编写集成测试
     - 验证创建群组、邀请成员、接受邀请和共享资源成功路径
     - 验证非群组所有者修改群组信息被拒绝
 

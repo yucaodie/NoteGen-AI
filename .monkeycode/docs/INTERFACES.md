@@ -158,11 +158,55 @@ Authorization: Bearer <access-token>
 ]
 ```
 
+### Collaboration
+
+- `POST /api/v1/groups`
+- `POST /api/v1/groups/:groupId/invitations`
+- `POST /api/v1/groups/invitations/:invitationId/accept`
+- `POST /api/v1/shares`
+- `PATCH /api/v1/shares/:shareId`
+
+上述接口统一需要请求头:
+
+```text
+Authorization: Bearer <access-token>
+```
+
+`POST /api/v1/groups` 请求体:
+
+```json
+{
+  "name": "Editors"
+}
+```
+
+`POST /api/v1/groups/:groupId/invitations` 请求体:
+
+```json
+{
+  "inviteeEmail": "member@example.com"
+}
+```
+
+`POST /api/v1/shares` 请求体:
+
+```json
+{
+  "resourceType": "knowledge_base",
+  "resourceId": "kb-1",
+  "groupId": "group-1",
+  "permission": "read"
+}
+```
+
 ## 已实现共享类型
 
 - `KnowledgeBase`
+- `Group`
+- `GroupInvitation`
 - `UserProfile`
 - `GroupMembership`
+- `ResourceShare`
 - `AccessContext`
 - `AuthSession`
 - `AuthBootstrap`

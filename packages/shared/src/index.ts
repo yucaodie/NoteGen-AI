@@ -45,6 +45,15 @@ export type Group = {
   name: string;
 };
 
+export type GroupInvitation = {
+  id: string;
+  groupId: string;
+  inviterUserId: string;
+  inviteeEmail: string;
+  status: 'pending' | 'accepted' | 'expired' | 'revoked';
+  expiresAt: string;
+};
+
 export type ResourceShare = {
   id: string;
   resourceType: 'knowledge_base' | 'folder';

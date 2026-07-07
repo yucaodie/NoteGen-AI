@@ -34,6 +34,8 @@ npm run test:ui
 
 - API 认证服务: `apps/api/src/auth/service.ts`
 - API 认证路由: `apps/api/src/routes/auth.ts`
+- API 协作服务: `apps/api/src/collaboration/service.ts`
+- API 协作路由: `apps/api/src/routes/collaboration.ts`
 - API 内容服务: `apps/api/src/content/service.ts`
 - API 内容路由: `apps/api/src/routes/content.ts`
 - 前端认证请求: `apps/web/lib/auth.ts`
@@ -50,6 +52,8 @@ npm run test:ui
 ## 测试覆盖
 
 - `apps/api/src/server.test.ts`: 认证接口成功、失败、会话恢复和登出。
+- `apps/api/src/server.test.ts`: 还覆盖群组、邀请、接受邀请和共享路由。
+- `apps/api/src/collaboration/service.test.ts`: 群组创建、邀请接受、共享创建更新和越权拒绝。
 - `apps/api/src/content/service.test.ts`: 知识库树聚合、笔记版本递增和跨用户访问拒绝。
 - `apps/api/src/content/service.test.ts`: 还覆盖 sync event 写入和按游标读取。
 - `apps/api/src/supabase/migrations.test.ts`: 核心迁移结构与 RLS 关键片段。

@@ -3,6 +3,7 @@ import type {
   AccessContext,
   AppDescriptor,
   AuthBootstrap,
+  GroupInvitation,
   KnowledgeBaseTree,
   PendingEmailConfirmation,
   SyncEventRecord,
@@ -155,5 +156,19 @@ describe('shared domain contracts', () => {
 
     expect(syncEvent.payload.knowledgeBaseId).toBe('kb-1');
     expect(syncEvent.operation).toBe('upsert');
+  });
+
+  it('supports group invitation payloads for collaboration flows', () => {
+    const invitation: GroupInvitation = {
+      id: 'invite-1',
+      groupId: 'group-1',
+      inviterUserId: 'user-1',
+      inviteeEmail: 'member@example.com',
+      status: 'pending',
+      expiresAt: '2026-07-14T00:00:00.000Z',
+    };
+
+    expect(invitation.status).toBe('pending');
+    expect(invitation.inviteeEmail).toContain('@');
   });
 });

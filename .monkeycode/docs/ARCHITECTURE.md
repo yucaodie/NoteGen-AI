@@ -3,7 +3,7 @@
 ## 系统分层
 
 - `apps/web`: Next.js 前端，负责首页、认证页、工作区、浏览器端会话恢复、本地草稿缓存与离线只读回退。
-- `apps/api`: Node.js HTTP 服务，负责健康检查、认证接口、默认工作区初始化和内容 CRUD API。
+- `apps/api`: Node.js HTTP 服务，负责健康检查、认证接口、默认工作区初始化、内容 CRUD API 和协作共享 API。
 - `supabase/migrations`: 数据库 schema、RLS policy 和权限辅助函数。
 - `packages/shared`: 前后端共享领域类型，包括知识库、认证会话、工作区引导数据和访问上下文。
 
@@ -29,6 +29,12 @@
 - 软删除通过写入 `deleted_at` 实现，查询路径统一过滤 `deleted_at is null`。
 - 笔记更新时由 API 层统一递增 `version` 并刷新 `content_hash`，为后续同步状态机打基础。
 - `sync_events` 已提供写入和按游标拉取能力，前端可基于 `since` 做增量刷新判断。
+
+## 当前协作 API
+
+- `CollaborationService` 已支持群组创建、邀请创建、邀请接受、共享关系创建和共享权限更新。
+- 群组邀请接受流程会校验当前登录邮箱、邀请状态和过期时间，再补齐 `group_members` 关系。
+- 共享关系创建与更新同时要求群组归属校验和资源所有权校验，避免把不属于当前用户的知识库或文件夹共享到群组。
 
 ## 当前工作区前端
 

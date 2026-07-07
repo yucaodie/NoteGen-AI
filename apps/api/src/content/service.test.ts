@@ -11,7 +11,7 @@ const env = {
 
 describe('createContentService', () => {
   it('returns knowledge base tree with folders and notes', async () => {
-    const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
+    const fetchMock = vi.fn(async (input: URL | string) => {
       const url = input.toString();
 
       if (url.endsWith('/auth/v1/user')) {
@@ -64,7 +64,7 @@ describe('createContentService', () => {
   });
 
   it('increments note version and content hash when updating a note', async () => {
-    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
       const url = input.toString();
 
       if (url.endsWith('/auth/v1/user')) {
@@ -122,7 +122,7 @@ describe('createContentService', () => {
   });
 
   it('rejects access to resources owned by another user', async () => {
-    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
       const url = input.toString();
 
       if (url.endsWith('/auth/v1/user')) {
@@ -147,7 +147,7 @@ describe('createContentService', () => {
   });
 
   it('creates conflict when the cloud version moved ahead', async () => {
-    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
       const url = input.toString();
 
       if (url.endsWith('/auth/v1/user')) {
@@ -185,7 +185,7 @@ describe('createContentService', () => {
   });
 
   it('writes sync events with the current user owner id', async () => {
-    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
       const url = input.toString();
 
       if (url.endsWith('/auth/v1/user')) {
@@ -215,7 +215,7 @@ describe('createContentService', () => {
   });
 
   it('lists sync events newer than a given cursor', async () => {
-    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
       const url = input.toString();
 
       if (url.endsWith('/auth/v1/user')) {

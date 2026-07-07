@@ -34,7 +34,7 @@ export async function handleContentRoute(
 
   if (method === 'POST' && pathname === '/api/v1/knowledge-bases') {
     const body = await readJsonBody(request);
-    sendJson(response, 200, await contentService.createKnowledgeBase(accessToken!, body));
+    sendJson(response, 200, await contentService.createKnowledgeBase(accessToken!, body as never));
     return { handled: true };
   }
 
@@ -59,7 +59,7 @@ export async function handleContentRoute(
 
   if (method === 'POST' && pathname === '/api/v1/folders') {
     const body = await readJsonBody(request);
-    sendJson(response, 200, await contentService.createFolder(accessToken!, body));
+    sendJson(response, 200, await contentService.createFolder(accessToken!, body as never));
     return { handled: true };
   }
 
@@ -87,7 +87,7 @@ export async function handleContentRoute(
 
   if (method === 'POST' && pathname === '/api/v1/notes') {
     const body = await readJsonBody(request);
-    sendJson(response, 200, await contentService.createNote(accessToken!, body));
+    sendJson(response, 200, await contentService.createNote(accessToken!, body as never));
     return { handled: true };
   }
 

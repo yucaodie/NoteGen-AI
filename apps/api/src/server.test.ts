@@ -1,6 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AddressInfo } from 'node:net';
-import type { AuthBootstrap, Folder, KnowledgeBase, KnowledgeBaseTree, Note, SyncEventRecord } from '@supanotegen/shared';
+import type {
+  AuthBootstrap,
+  Folder,
+  Group,
+  GroupInvitation,
+  GroupMembership,
+  KnowledgeBase,
+  KnowledgeBaseTree,
+  Note,
+  ResourceShare,
+  SyncEventRecord,
+} from '@supanotegen/shared';
 import { createAppServer } from './server';
 
 const logger = {
@@ -94,6 +105,34 @@ const syncEventFixture: SyncEventRecord = {
   createdAt: '2026-07-07T16:42:00.000Z',
 };
 
+const groupFixture: Group = {
+  id: 'group-1',
+  ownerUserId: 'user-1',
+  name: 'Editors',
+};
+
+const invitationFixture: GroupInvitation = {
+  id: 'invite-1',
+  groupId: 'group-1',
+  inviterUserId: 'user-1',
+  inviteeEmail: 'member@example.com',
+  status: 'pending',
+  expiresAt: '2099-07-14T00:00:00.000Z',
+};
+
+const membershipFixture: GroupMembership = {
+  groupId: 'group-1',
+  role: 'member',
+};
+
+const shareFixture: ResourceShare = {
+  id: 'share-1',
+  resourceType: 'knowledge_base',
+  resourceId: 'kb-1',
+  groupId: 'group-1',
+  permission: 'read',
+};
+
 const contentService = {
   listKnowledgeBases: vi.fn(async () => [knowledgeBaseFixture]),
   createKnowledgeBase: vi.fn(async () => knowledgeBaseFixture),
@@ -109,6 +148,14 @@ const contentService = {
   deleteNote: vi.fn(async () => undefined),
   createSyncEvent: vi.fn(async () => undefined),
   listSyncEvents: vi.fn(async () => [syncEventFixture]),
+};
+
+const collaborationService = {
+  createGroup: vi.fn(async () => groupFixture),
+  createGroupInvitation: vi.fn(async () => invitationFixture),
+  acceptGroupInvitation: vi.fn(async () => membershipFixture),
+  createResourceShare: vi.fn(async () => shareFixture),
+  updateResourceShare: vi.fn(async () => ({ ...shareFixture, permission: 'write' as const })),
 };
 
 let activeServer: ReturnType<typeof createAppServer> | undefined;
@@ -141,7 +188,7 @@ describe('createAppServer auth routes', () => {
 
     expect(response.status).toBe(200);
     expect(authService.signUp).toHaveBeenCalledWith('user@example.com', 'password-123');
-    expect(response.body.workspace.profile.defaultWorkspaceId).toBe('kb-1');
+    expect((response.body as Record<string, any>).workspace.profile.defaultWorkspaceId).toBe('kb-1');
   });
 
   it('returns pending confirmation payload after sign up when email verification is enabled', async () => {
@@ -149,7 +196,7 @@ describe('createAppServer auth routes', () => {
       status: 'pending_email_confirmation',
       email: 'pending@example.com',
       message: '注册成功，请先确认邮箱后再登录。',
-    });
+    } as any);
 
     const response = await sendJsonRequest('/auth/sign-up', {
       method: 'POST',
@@ -157,8 +204,8 @@ describe('createAppServer auth routes', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(response.body.status).toBe('pending_email_confirmation');
-    expect(response.body.email).toBe('pending@example.com');
+    expect((response.body as Record<string, any>).status).toBe('pending_email_confirmation');
+    expect((response.body as Record<string, any>).email).toBe('pending@example.com');
   });
 
   it('returns bootstrap payload after sign in', async () => {
@@ -169,7 +216,7 @@ describe('createAppServer auth routes', () => {
 
     expect(response.status).toBe(200);
     expect(authService.signIn).toHaveBeenCalledWith('user@example.com', 'password-123');
-    expect(response.body.session.accessToken).toBe('access-token');
+    expect((response.body as Record<string, any>).session.accessToken).toBe('access-token');
   });
 
   it('returns auth_failed when sign in is rejected', async () => {
@@ -183,8 +230,8 @@ describe('createAppServer auth routes', () => {
     });
 
     expect(response.status).toBe(400);
-    expect(response.body.code).toBe('auth_failed');
-    expect(response.body.message).toContain('Invalid login credentials');
+    expect((response.body as Record<string, any>).code).toBe('auth_failed');
+    expect((response.body as Record<string, any>).message).toContain('Invalid login credentials');
   });
 
   it('recovers session using bearer and refresh token headers', async () => {
@@ -198,7 +245,7 @@ describe('createAppServer auth routes', () => {
 
     expect(response.status).toBe(200);
     expect(authService.getSession).toHaveBeenCalledWith('access-token', 'refresh-token');
-    expect(response.body.session.user.id).toBe('user-1');
+    expect((response.body as Record<string, any>).session.user.id).toBe('user-1');
   });
 
   it('returns session_expired when session recovery fails', async () => {
@@ -215,8 +262,8 @@ describe('createAppServer auth routes', () => {
     });
 
     expect(response.status).toBe(401);
-    expect(response.body.code).toBe('session_expired');
-    expect(response.body.message).toContain('Session expired');
+    expect((response.body as Record<string, any>).code).toBe('session_expired');
+    expect((response.body as Record<string, any>).message).toContain('Session expired');
   });
 
   it('returns signedOut true after sign out', async () => {
@@ -229,7 +276,7 @@ describe('createAppServer auth routes', () => {
 
     expect(response.status).toBe(200);
     expect(authService.signOut).toHaveBeenCalledWith('access-token');
-    expect(response.body.signedOut).toBe(true);
+    expect((response.body as Record<string, any>).signedOut).toBe(true);
   });
 });
 
@@ -242,7 +289,7 @@ describe('createAppServer content routes', () => {
 
     expect(response.status).toBe(200);
     expect(contentService.listKnowledgeBases).toHaveBeenCalledWith('access-token');
-    expect(response.body[0]?.id).toBe('kb-1');
+    expect((response.body as Array<Record<string, any>>)[0]?.id).toBe('kb-1');
   });
 
   it('returns knowledge base tree aggregate', async () => {
@@ -253,7 +300,7 @@ describe('createAppServer content routes', () => {
 
     expect(response.status).toBe(200);
     expect(contentService.getKnowledgeBaseTree).toHaveBeenCalledWith('access-token', 'kb-1');
-    expect(response.body.notes).toHaveLength(1);
+    expect((response.body as Record<string, any>).notes).toHaveLength(1);
   });
 
   it('creates and updates a note', async () => {
@@ -283,7 +330,7 @@ describe('createAppServer content routes', () => {
       expect.objectContaining({ title: 'Quick Note' }),
     );
     expect(updateResponse.status).toBe(200);
-    expect(updateResponse.body.version).toBe(2);
+    expect((updateResponse.body as Record<string, any>).version).toBe(2);
   });
 
   it('returns notes scoped to a folder', async () => {
@@ -294,7 +341,7 @@ describe('createAppServer content routes', () => {
 
     expect(response.status).toBe(200);
     expect(contentService.listFolderNotes).toHaveBeenCalledWith('access-token', 'folder-1');
-    expect(response.body[0]?.folderId).toBe('folder-1');
+    expect((response.body as Array<Record<string, any>>)[0]?.folderId).toBe('folder-1');
   });
 
   it('returns forbidden for cross-user access rejection', async () => {
@@ -308,7 +355,7 @@ describe('createAppServer content routes', () => {
     });
 
     expect(response.status).toBe(403);
-    expect(response.body.code).toBe('forbidden');
+    expect((response.body as Record<string, any>).code).toBe('forbidden');
   });
 
   it('returns deleted true for soft delete endpoints', async () => {
@@ -319,7 +366,7 @@ describe('createAppServer content routes', () => {
 
     expect(response.status).toBe(200);
     expect(contentService.deleteNote).toHaveBeenCalledWith('access-token', 'note-1');
-    expect(response.body.deleted).toBe(true);
+    expect((response.body as Record<string, any>).deleted).toBe(true);
   });
 
   it('records sync events for note saves', async () => {
@@ -342,7 +389,7 @@ describe('createAppServer content routes', () => {
       'access-token',
       expect.objectContaining({ resourceId: 'note-1', status: 'synced' }),
     );
-    expect(response.body.recorded).toBe(true);
+    expect((response.body as Record<string, any>).recorded).toBe(true);
   });
 
   it('lists sync events for incremental refresh checks', async () => {
@@ -360,6 +407,89 @@ describe('createAppServer content routes', () => {
   });
 });
 
+describe('createAppServer collaboration routes', () => {
+  it('creates a group', async () => {
+    const response = await sendJsonRequest('/api/v1/groups', {
+      method: 'POST',
+      headers: { authorization: 'Bearer access-token' },
+      body: { name: 'Editors' },
+    });
+
+    expect(response.status).toBe(200);
+    expect(collaborationService.createGroup).toHaveBeenCalledWith('access-token', { name: 'Editors' });
+    expect((response.body as Record<string, any>).id).toBe('group-1');
+  });
+
+  it('creates and accepts a group invitation', async () => {
+    const inviteResponse = await sendJsonRequest('/api/v1/groups/group-1/invitations', {
+      method: 'POST',
+      headers: { authorization: 'Bearer access-token' },
+      body: { inviteeEmail: 'member@example.com' },
+    });
+
+    const acceptResponse = await sendJsonRequest('/api/v1/groups/invitations/invite-1/accept', {
+      method: 'POST',
+      headers: { authorization: 'Bearer access-token' },
+    });
+
+    expect(inviteResponse.status).toBe(200);
+    expect(collaborationService.createGroupInvitation).toHaveBeenCalledWith('access-token', 'group-1', {
+      inviteeEmail: 'member@example.com',
+    });
+    expect(acceptResponse.status).toBe(200);
+    expect(collaborationService.acceptGroupInvitation).toHaveBeenCalledWith('access-token', 'invite-1');
+  });
+
+  it('creates and updates a resource share', async () => {
+    const createResponse = await sendJsonRequest('/api/v1/shares', {
+      method: 'POST',
+      headers: { authorization: 'Bearer access-token' },
+      body: {
+        resourceType: 'knowledge_base',
+        resourceId: 'kb-1',
+        groupId: 'group-1',
+        permission: 'read',
+      },
+    });
+
+    const updateResponse = await sendJsonRequest('/api/v1/shares/share-1', {
+      method: 'PATCH',
+      headers: { authorization: 'Bearer access-token' },
+      body: { permission: 'write' },
+    });
+
+    expect(createResponse.status).toBe(200);
+    expect(updateResponse.status).toBe(200);
+    expect(collaborationService.createResourceShare).toHaveBeenCalledWith(
+      'access-token',
+      expect.objectContaining({ resourceId: 'kb-1', permission: 'read' }),
+    );
+    expect(collaborationService.updateResourceShare).toHaveBeenCalledWith('access-token', 'share-1', {
+      permission: 'write',
+    });
+  });
+
+  it('returns forbidden when collaboration service rejects unauthorized group changes', async () => {
+    collaborationService.createResourceShare.mockRejectedValueOnce(
+      Object.assign(new Error('当前用户没有群组管理权限。'), { statusCode: 403, code: 'forbidden' }),
+    );
+
+    const response = await sendJsonRequest('/api/v1/shares', {
+      method: 'POST',
+      headers: { authorization: 'Bearer access-token' },
+      body: {
+        resourceType: 'knowledge_base',
+        resourceId: 'kb-1',
+        groupId: 'group-1',
+        permission: 'read',
+      },
+    });
+
+    expect(response.status).toBe(403);
+    expect((response.body as Record<string, any>).code).toBe('forbidden');
+  });
+});
+
 async function sendJsonRequest(
   path: string,
   options: {
@@ -368,7 +498,7 @@ async function sendJsonRequest(
     headers?: Record<string, string>;
   },
 ) {
-  activeServer = createAppServer(logger, authService, contentService);
+  activeServer = createAppServer(logger, authService, contentService, collaborationService);
   await new Promise<void>((resolve) => activeServer?.listen(0, '127.0.0.1', resolve));
 
   const address = activeServer.address() as AddressInfo;

@@ -11,7 +11,7 @@ const env = {
 
 describe('createAuthService', () => {
   it('falls back when user_profiles is missing from PostgREST schema cache', async () => {
-    const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: URL | string, init?: RequestInit) => {
       const url = input.toString();
 
       if (url.includes('/auth/v1/token?grant_type=password')) {
@@ -68,7 +68,7 @@ describe('createAuthService', () => {
   });
 
   it('returns pending confirmation when sign up requires email verification', async () => {
-    const fetchMock = vi.fn(async (input: URL | RequestInfo) => {
+    const fetchMock = vi.fn(async (input: URL | string) => {
       const url = input.toString();
 
       if (url.includes('/auth/v1/signup')) {
