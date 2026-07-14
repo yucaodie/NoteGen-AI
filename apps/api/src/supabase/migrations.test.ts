@@ -32,7 +32,24 @@ describe('bootstrap core schema migration', () => {
     ];
 
     for (const tableName of requiredTables) {
-      expect(migrationSql).toContain(`create table public.${tableName}`);
+      expect(migrationSql).toContain(`create table if not exists public.${tableName}`);
+    }
+  });
+
+  it('can be rerun against partially bootstrapped databases', () => {
+    const requiredFragments = [
+      'create extension if not exists pgcrypto;',
+      'create extension if not exists vector;',
+      "exception when duplicate_object then null;",
+      'alter table public.embedding_jobs add column if not exists owner_user_id',
+      'alter table public.user_profiles\n    add constraint user_profiles_default_workspace_fk',
+      'create unique index if not exists group_members_group_user_uidx',
+      'drop trigger if exists set_user_profiles_updated_at on public.user_profiles;',
+      'drop policy if exists "notes_select_accessible" on public.notes;',
+    ];
+
+    for (const fragment of requiredFragments) {
+      expect(migrationSql).toContain(fragment);
     }
   });
 
