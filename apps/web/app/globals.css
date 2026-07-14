@@ -278,6 +278,472 @@ button {
   align-items: center;
 }
 
+.collaboration-panels {
+  display: grid;
+  gap: 20px;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.input-row .text-input {
+  flex: 1;
+}
+
+.input-column {
+  display: grid;
+  gap: 12px;
+}
+
+.workspace-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  padding: 8px 20px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+
+.tab-button.active {
+  border-color: var(--accent);
+  background: rgba(31, 111, 95, 0.08);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.select-input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font: inherit;
+}
+
+.shared-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--accent-2);
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.readonly-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(184, 74, 46, 0.12);
+  color: #8a321a;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.notegen-workspace {
+  width: 100%;
+  min-height: 100vh;
+  background: #f7f8f5;
+  color: #202428;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.notegen-titlebar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 10px 0 14px;
+  border-bottom: 1px solid #d8ddd5;
+  background: #fbfcfa;
+}
+
+.notegen-window-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+
+.notegen-window-title span {
+  min-width: 0;
+  overflow: hidden;
+  color: #65705f;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notegen-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-button,
+.rail-button,
+.notegen-text-button,
+.pane-tab,
+.editor-tab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.icon-button {
+  display: inline-flex;
+  width: 30px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-color: #cfd6d0;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.icon-button.primary,
+.notegen-text-button.primary,
+.notegen-text-button.save-button {
+  border-color: #2f6f5a;
+  background: #2f6f5a;
+  color: #ffffff;
+}
+
+.icon-button:disabled,
+.notegen-text-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.notegen-text-button {
+  min-height: 26px;
+  padding: 0 10px;
+  border-color: #cfd6d0;
+  border-radius: 6px;
+  background: #ffffff;
+  font-size: 0.82rem;
+}
+
+.notegen-shell {
+  display: grid;
+  grid-template-columns: 44px 300px minmax(0, 1fr) 320px;
+  height: calc(100vh - 36px);
+  min-height: 620px;
+}
+
+.notegen-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 6px;
+  border-right: 1px solid #d8ddd5;
+  background: #eef2ec;
+}
+
+.rail-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: #647066;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.rail-button.active,
+.rail-button:hover {
+  background: #dfece5;
+  color: #214d3f;
+}
+
+.rail-bottom {
+  margin-top: auto;
+}
+
+.notegen-left-pane,
+.notegen-editor-pane,
+.notegen-chat-pane {
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid #d8ddd5;
+  background: #fbfcfa;
+}
+
+.notegen-left-pane,
+.notegen-chat-pane {
+  overflow: auto;
+}
+
+.pane-tabs,
+.editor-tabs,
+.chat-header {
+  display: flex;
+  height: 38px;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #dfe4dd;
+  background: #f3f6f1;
+}
+
+.pane-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0 10px;
+}
+
+.pane-tab {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: #66726a;
+  font-size: 0.82rem;
+}
+
+.pane-tab.active {
+  background: #ffffff;
+  color: #214d3f;
+  box-shadow: inset 0 0 0 1px #d4ddd4;
+}
+
+.pane-section {
+  padding: 12px 10px;
+  border-bottom: 1px solid #edf0eb;
+}
+
+.pane-section h2,
+.conflict-box h2 {
+  margin: 0 0 8px;
+  color: #5b665f;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.note-list-section {
+  border-bottom: 0;
+}
+
+.notegen-workspace .workspace-list {
+  gap: 3px;
+}
+
+.notegen-workspace .workspace-item {
+  border-radius: 6px;
+  border-color: transparent;
+  background: transparent;
+  padding: 8px 9px;
+}
+
+.notegen-workspace .workspace-item strong,
+.notegen-workspace .workspace-item span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notegen-workspace .workspace-item span,
+.empty-note {
+  color: #738078;
+  font-size: 0.78rem;
+}
+
+.notegen-workspace .workspace-item:hover {
+  background: #eef3ec;
+}
+
+.notegen-workspace .workspace-item.active {
+  border-color: #c3d8cf;
+  background: #dfece5;
+  box-shadow: none;
+}
+
+.note-row {
+  min-height: 54px;
+}
+
+.notegen-editor-pane {
+  display: grid;
+  grid-template-rows: 38px minmax(0, 1fr) 34px;
+  background: #ffffff;
+}
+
+.editor-tabs {
+  padding: 0 8px;
+}
+
+.editor-tab {
+  display: inline-flex;
+  max-width: min(420px, 90%);
+  height: 28px;
+  align-items: center;
+  padding: 0 12px;
+  overflow: hidden;
+  border-color: #d4ddd4;
+  border-bottom-color: #ffffff;
+  border-radius: 6px 6px 0 0;
+  background: #ffffff;
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-surface {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  padding: 18px clamp(18px, 4vw, 54px) 0;
+}
+
+.editor-title-input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #edf0eb;
+  background: transparent;
+  color: #202428;
+  font: inherit;
+  font-size: 1.55rem;
+  font-weight: 750;
+  outline: none;
+  padding: 0 0 14px;
+}
+
+.notegen-workspace .editor-input,
+.markdown-editor {
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #27302b;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  outline: none;
+  padding: 18px 0;
+  resize: none;
+}
+
+.editor-empty {
+  display: grid;
+  place-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.editor-empty h2 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+}
+
+.editor-empty p {
+  margin: 0;
+  color: #738078;
+}
+
+.editor-footer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 0 10px 0 14px;
+  border-top: 1px solid #dfe4dd;
+  background: #f7f8f5;
+  color: #65705f;
+  font-size: 0.78rem;
+}
+
+.editor-footer span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.save-button {
+  margin-left: auto;
+}
+
+.notegen-chat-pane {
+  display: grid;
+  grid-template-rows: 38px minmax(0, 1fr) auto;
+  border-right: 0;
+  background: #f8faf7;
+}
+
+.chat-header {
+  justify-content: space-between;
+  padding: 0 12px;
+  font-size: 0.86rem;
+}
+
+.chat-header span {
+  color: #65705f;
+  font-size: 0.75rem;
+}
+
+.chat-thread {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  overflow: auto;
+  padding: 14px;
+}
+
+.chat-message {
+  display: grid;
+  gap: 5px;
+  max-width: 92%;
+  padding: 10px 12px;
+  border: 1px solid #dfe4dd;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 0.84rem;
+}
+
+.chat-message p {
+  margin: 0;
+  color: #536059;
+  line-height: 1.5;
+}
+
+.chat-message.user {
+  justify-self: end;
+  background: #e8f3ec;
+}
+
+.conflict-box {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid #dfe4dd;
+  background: #fbfcfa;
+}
+
+.conflict-actions {
+  display: flex;
+  gap: 8px;
+}
+
 @media (min-width: 900px) {
   .hero-grid {
     grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
@@ -291,5 +757,49 @@ button {
   .workspace-board {
     grid-template-columns: 260px 260px minmax(0, 280px) minmax(0, 1fr);
     align-items: start;
+  }
+}
+
+@media (max-width: 899px) {
+  .notegen-titlebar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    height: auto;
+    min-height: 44px;
+    padding: 8px 10px;
+  }
+
+  .notegen-quick-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .notegen-shell {
+    grid-template-columns: 40px minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100vh - 44px);
+  }
+
+  .notegen-rail {
+    min-height: calc(100vh - 44px);
+  }
+
+  .notegen-left-pane,
+  .notegen-editor-pane,
+  .notegen-chat-pane {
+    grid-column: 2;
+    min-height: 360px;
+    border-right: 0;
+    border-bottom: 1px solid #d8ddd5;
+  }
+
+  .notegen-editor-pane {
+    grid-template-rows: 38px minmax(420px, 1fr) auto;
+  }
+
+  .editor-footer {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 44px;
+    padding: 8px 10px;
   }
 }

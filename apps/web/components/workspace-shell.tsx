@@ -242,7 +242,7 @@ export function WorkspaceShell() {
     return (
       <main className="page-shell workspace-layout">
         <section className="hero-card">
-          <p className="eyebrow">Workspace Shell</p>
+          <p className="eyebrow">SupaNoteGen Cloud</p>
           <h1 className="workspace-heading">正在恢复云端工作区</h1>
           <p className="workspace-subtitle hero-copy">正在校验认证会话并尝试拉取默认工作区。</p>
         </section>
@@ -254,8 +254,8 @@ export function WorkspaceShell() {
     return (
       <main className="page-shell workspace-layout">
         <section className="hero-card">
-          <p className="eyebrow">Workspace Shell</p>
-          <h1 className="workspace-heading">知识工作区骨架</h1>
+          <p className="eyebrow">SupaNoteGen Cloud</p>
+          <h1 className="workspace-heading">云端知识工作区</h1>
           <p className="workspace-subtitle hero-copy">{state.message}</p>
           <div className="cta-row">
             <Link className="primary-button" href="/auth">
@@ -279,414 +279,445 @@ export function WorkspaceShell() {
   const visibleFolders = tree ? sortFolders(tree.folders) : [];
 
   return (
-    <main className="page-shell workspace-layout">
-      <section className="hero-card">
-        <div className="workspace-header-row">
-          <div>
-            <p className="eyebrow">Workspace Shell</p>
-            <h1 className="workspace-heading">知识工作区骨架</h1>
-          </div>
-          <button
-            className="secondary-button"
-            type="button"
-            disabled={isPending}
-            onClick={() => {
-              startTransition(async () => {
-                try {
-                  await signOut(bootstrap.session);
-                } catch {
-                  // The client still clears local state to end the session flow.
-                }
-
-                clearStoredSession();
-                setState({
-                  kind: 'unauthenticated',
-                  message: '你已退出登录。',
-                });
-              });
-            }}
-          >
-            退出登录
-          </button>
+    <main className="notegen-workspace">
+      <header className="notegen-titlebar">
+        <div className="notegen-window-title">
+          <strong>SupaNoteGen</strong>
+          <span>{workspaceMessage ?? state.message}</span>
         </div>
-
-        <p className="workspace-subtitle hero-copy">{workspaceMessage ?? state.message}</p>
-
-        <div className="panel-grid workspace-panels">
-          <article className="panel-card">
-            <h2 className="panel-title">当前用户</h2>
-            <p className="panel-copy">{bootstrap.session.user.email}</p>
-            <p className="status-note">显示名：{bootstrap.workspace.profile.displayName}</p>
-            <p className="status-note">模式：{bootstrap.workspace.mode}</p>
-            <p className="status-note">待同步资源：{pendingSyncCount} 个</p>
-            <p className="status-note">冲突记录：{conflicts.length} 个</p>
-          </article>
-
-          <article className="panel-card">
-            <h2 className="panel-title">默认工作区</h2>
-            <p className="panel-copy">{bootstrap.workspace.profile.defaultWorkspaceId ?? '尚未初始化'}</p>
-            <p className="status-note">
-              当前可访问知识域：{knowledgeBases.length || bootstrap.workspace.accessContext.knowledgeBaseIds.length} 个
-            </p>
-            {state.kind === 'authenticated' ? (
-              <div className="cta-row compact-actions">
-                <button
-                  className="secondary-button"
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => {
-                    startTransition(async () => {
-                      try {
-                        const created = await createKnowledgeBase(bootstrap.session, {
-                          name: `New Workspace ${knowledgeBases.length + 1}`,
-                          description: 'Created from the browser workspace',
-                        });
-                        const nextKnowledgeBases = [...knowledgeBases, created];
-                        setKnowledgeBases(nextKnowledgeBases);
-                        setSelectedKnowledgeBaseId(created.id);
-                        setSelectedFolderId(null);
-                        setSelectedNoteId(null);
-                        setTree({ knowledgeBase: created, folders: [], notes: [] });
-                        setNoteTitle('');
-                        setNoteContent('');
-                        setWorkspaceMessage('已创建新的知识库工作区。');
-                      } catch (error) {
-                        setWorkspaceMessage(error instanceof Error ? error.message : '创建知识库失败。');
-                      }
-                    });
-                  }}
-                >
-                  新建知识库
-                </button>
-                <button
-                  className="secondary-button"
-                  type="button"
-                  disabled={isPending || !selectedKnowledgeBaseId}
-                  onClick={() => {
-                    if (!selectedKnowledgeBaseId) {
-                      return;
-                    }
-
-                    startTransition(async () => {
-                      try {
-                        const folder = await createFolder(bootstrap.session, {
-                          knowledgeBaseId: selectedKnowledgeBaseId,
-                          parentFolderId: null,
-                          title: `Folder ${visibleFolders.length + 1}`,
-                          sortKey: `${visibleFolders.length + 1}`.padStart(4, '0'),
-                        });
-                        setTree((currentTree) => (currentTree ? buildNextTreeWithFolder(currentTree, folder) : currentTree));
-                        setSelectedFolderId(folder.id);
-                        setWorkspaceMessage('已创建新文件夹。');
-                      } catch (error) {
-                        setWorkspaceMessage(error instanceof Error ? error.message : '创建文件夹失败。');
-                      }
-                    });
-                  }}
-                >
-                  新建文件夹
-                </button>
-                <button
-                  className="primary-button"
-                  type="button"
-                  disabled={isPending || !selectedKnowledgeBaseId}
-                  onClick={() => {
-                    if (!selectedKnowledgeBaseId) {
-                      return;
-                    }
-
-                    startTransition(async () => {
-                      try {
-                        const note = await createNote(bootstrap.session, {
-                          knowledgeBaseId: selectedKnowledgeBaseId,
-                          folderId: selectedFolderId,
-                          title: `Untitled Note ${visibleNotes.length + 1}`,
-                          markdownContent: '',
-                        });
-                        setTree((currentTree) => (currentTree ? buildNextTree(currentTree, note) : currentTree));
-                        setSelectedNoteId(note.id);
-                        setNoteTitle(note.title);
-                        setNoteContent(note.markdownContent);
-                        setWorkspaceMessage('已创建新笔记。');
-                      } catch (error) {
-                        setWorkspaceMessage(error instanceof Error ? error.message : '创建笔记失败。');
-                      }
-                    });
-                  }}
-                >
-                  新建笔记
-                </button>
-              </div>
-            ) : null}
-          </article>
-        </div>
-      </section>
-
-      <section className="workspace-board" aria-label="知识库内容工作区">
-        <article className="panel-card">
-          <h2 className="panel-title">知识库</h2>
-          <ul className="workspace-list">
-            {knowledgeBases.map((knowledgeBase) => (
-              <li key={knowledgeBase.id}>
-                <button
-                  className={knowledgeBase.id === selectedKnowledgeBaseId ? 'workspace-item active' : 'workspace-item'}
-                  type="button"
-                  onClick={() => {
-                    setSelectedKnowledgeBaseId(knowledgeBase.id);
-                    setSelectedFolderId(null);
-                    setSelectedNoteId(null);
-                  }}
-                >
-                  <strong>{knowledgeBase.name}</strong>
-                  <span className="status-note">{knowledgeBase.description ?? '暂无描述'}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </article>
-
-        <article className="panel-card">
-          <h2 className="panel-title">目录树</h2>
-          <ul className="workspace-list">
-            <li>
+        <div className="notegen-quick-actions" aria-label="快速操作">
+          {state.kind === 'authenticated' ? (
+            <>
               <button
-                className={selectedFolderId === null ? 'workspace-item active' : 'workspace-item'}
+                className="icon-button"
                 type="button"
-                onClick={() => setSelectedFolderId(null)}
+                title="新建知识库"
+                disabled={isPending}
+                onClick={() => {
+                  startTransition(async () => {
+                    try {
+                      const created = await createKnowledgeBase(bootstrap.session, {
+                        name: `New Workspace ${knowledgeBases.length + 1}`,
+                        description: 'Created from the browser workspace',
+                      });
+                      const nextKnowledgeBases = [...knowledgeBases, created];
+                      setKnowledgeBases(nextKnowledgeBases);
+                      setSelectedKnowledgeBaseId(created.id);
+                      setSelectedFolderId(null);
+                      setSelectedNoteId(null);
+                      setTree({ knowledgeBase: created, folders: [], notes: [] });
+                      setNoteTitle('');
+                      setNoteContent('');
+                      setWorkspaceMessage('已创建新的知识库工作区。');
+                    } catch (error) {
+                      setWorkspaceMessage(error instanceof Error ? error.message : '创建知识库失败。');
+                    }
+                  });
+                }}
               >
-                <strong>全部笔记</strong>
-                <span className="status-note">显示当前知识库中的全部笔记</span>
+                KB
               </button>
-            </li>
-            {visibleFolders.map((folder) => (
-              <li key={folder.id}>
+              <button
+                className="icon-button"
+                type="button"
+                title="新建文件夹"
+                disabled={isPending || !selectedKnowledgeBaseId}
+                onClick={() => {
+                  if (!selectedKnowledgeBaseId) {
+                    return;
+                  }
+
+                  startTransition(async () => {
+                    try {
+                      const folder = await createFolder(bootstrap.session, {
+                        knowledgeBaseId: selectedKnowledgeBaseId,
+                        parentFolderId: null,
+                        title: `Folder ${visibleFolders.length + 1}`,
+                        sortKey: `${visibleFolders.length + 1}`.padStart(4, '0'),
+                      });
+                      setTree((currentTree) => (currentTree ? buildNextTreeWithFolder(currentTree, folder) : currentTree));
+                      setSelectedFolderId(folder.id);
+                      setWorkspaceMessage('已创建新文件夹。');
+                    } catch (error) {
+                      setWorkspaceMessage(error instanceof Error ? error.message : '创建文件夹失败。');
+                    }
+                  });
+                }}
+              >
+                DIR
+              </button>
+              <button
+                className="icon-button primary"
+                type="button"
+                title="新建笔记"
+                disabled={isPending || !selectedKnowledgeBaseId}
+                onClick={() => {
+                  if (!selectedKnowledgeBaseId) {
+                    return;
+                  }
+
+                  startTransition(async () => {
+                    try {
+                      const note = await createNote(bootstrap.session, {
+                        knowledgeBaseId: selectedKnowledgeBaseId,
+                        folderId: selectedFolderId,
+                        title: `Untitled Note ${visibleNotes.length + 1}`,
+                        markdownContent: '',
+                      });
+                      setTree((currentTree) => (currentTree ? buildNextTree(currentTree, note) : currentTree));
+                      setSelectedNoteId(note.id);
+                      setNoteTitle(note.title);
+                      setNoteContent(note.markdownContent);
+                      setWorkspaceMessage('已创建新笔记。');
+                    } catch (error) {
+                      setWorkspaceMessage(error instanceof Error ? error.message : '创建笔记失败。');
+                    }
+                  });
+                }}
+              >
+                MD
+              </button>
+            </>
+          ) : null}
+        </div>
+        <button
+          className="notegen-text-button"
+          type="button"
+          disabled={isPending}
+          onClick={() => {
+            startTransition(async () => {
+              try {
+                await signOut(bootstrap.session);
+              } catch {
+                // The client still clears local state to end the session flow.
+              }
+
+              clearStoredSession();
+              setState({
+                kind: 'unauthenticated',
+                message: '你已退出登录。',
+              });
+            });
+          }}
+        >
+          退出
+        </button>
+      </header>
+
+      <div className="notegen-shell">
+        <nav className="notegen-rail" aria-label="主导航">
+          <button className="rail-button active" type="button" title="写作">
+            W
+          </button>
+          <button className="rail-button" type="button" title="搜索">
+            S
+          </button>
+          <button className="rail-button" type="button" title="AI">
+            AI
+          </button>
+          <button className="rail-button rail-bottom" type="button" title={bootstrap.session.user.email}>
+            U
+          </button>
+        </nav>
+
+        <aside className="notegen-left-pane" aria-label="文件和记录">
+          <div className="pane-tabs" role="tablist" aria-label="资源视图">
+            <button className="pane-tab active" type="button">
+              files
+            </button>
+            <button className="pane-tab" type="button">
+              notes
+            </button>
+          </div>
+
+          <section className="pane-section">
+            <h2>知识库</h2>
+            <ul className="workspace-list compact-list">
+              {knowledgeBases.map((knowledgeBase) => (
+                <li key={knowledgeBase.id}>
+                  <button
+                    className={knowledgeBase.id === selectedKnowledgeBaseId ? 'workspace-item active' : 'workspace-item'}
+                    type="button"
+                    onClick={() => {
+                      setSelectedKnowledgeBaseId(knowledgeBase.id);
+                      setSelectedFolderId(null);
+                      setSelectedNoteId(null);
+                    }}
+                  >
+                    <strong>{knowledgeBase.name}</strong>
+                    <span>{knowledgeBase.description ?? '暂无描述'}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="pane-section">
+            <h2>目录树</h2>
+            <ul className="workspace-list compact-list">
+              <li>
                 <button
-                  className={folder.id === selectedFolderId ? 'workspace-item active' : 'workspace-item'}
+                  className={selectedFolderId === null ? 'workspace-item active' : 'workspace-item'}
                   type="button"
-                  onClick={() => setSelectedFolderId(folder.id)}
+                  onClick={() => setSelectedFolderId(null)}
                 >
-                  <strong>{folder.title}</strong>
-                  <span className="status-note">排序键：{folder.sortKey}</span>
+                  <strong>全部笔记</strong>
+                  <span>{visibleNotes.length} notes</span>
                 </button>
               </li>
-            ))}
-          </ul>
-        </article>
+              {visibleFolders.map((folder) => (
+                <li key={folder.id}>
+                  <button
+                    className={folder.id === selectedFolderId ? 'workspace-item active' : 'workspace-item'}
+                    type="button"
+                    onClick={() => setSelectedFolderId(folder.id)}
+                  >
+                    <strong>{folder.title}</strong>
+                    <span>sort {folder.sortKey}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
 
-        <article className="panel-card">
-          <h2 className="panel-title">笔记列表</h2>
-          <ul className="workspace-list">
-            {visibleNotes.map((note) => (
-              <li key={note.id}>
-                <button
-                  className={note.id === selectedNoteId ? 'workspace-item active' : 'workspace-item'}
-                  type="button"
-                  onClick={() => selectNote(note)}
-                >
-                  <strong>{note.title}</strong>
-                  <span className="status-note">
-                    版本 {note.version}
-                    {syncMetadataMap[note.id] ? ` · ${formatSyncStatus(syncMetadataMap[note.id].syncStatus)}` : ''}
-                  </span>
-                </button>
-              </li>
-            ))}
-            {visibleNotes.length === 0 ? <li className="status-note">当前筛选下还没有笔记。</li> : null}
-          </ul>
-        </article>
+          <section className="pane-section note-list-section">
+            <h2>笔记列表</h2>
+            <ul className="workspace-list compact-list">
+              {visibleNotes.map((note) => (
+                <li key={note.id}>
+                  <button
+                    className={note.id === selectedNoteId ? 'workspace-item active note-row' : 'workspace-item note-row'}
+                    type="button"
+                    onClick={() => selectNote(note)}
+                  >
+                    <strong>{note.title}</strong>
+                    <span>
+                      v{note.version}
+                      {syncMetadataMap[note.id] ? ` / ${formatSyncStatus(syncMetadataMap[note.id].syncStatus)}` : ''}
+                    </span>
+                  </button>
+                </li>
+              ))}
+              {visibleNotes.length === 0 ? <li className="empty-note">当前筛选下还没有笔记。</li> : null}
+            </ul>
+          </section>
+        </aside>
 
-        <article className="panel-card editor-panel">
-          <h2 className="panel-title">笔记详情</h2>
+        <section className="notegen-editor-pane" aria-label="编辑器">
+          <div className="editor-tabs">
+            <button className="editor-tab active" type="button">
+              {currentNote?.title ?? 'Untitled'}
+            </button>
+          </div>
           {currentNote ? (
-            <div className="editor-grid">
-              <label className="field-label">
-                标题
-                <input
-                  aria-label="笔记标题"
-                  className="text-input"
-                  value={noteTitle}
-                  onChange={(event) => {
-                    const nextTitle = event.target.value;
-                    setNoteTitle(nextTitle);
-                    saveDraft({
-                      noteId: currentNote.id,
-                      title: nextTitle,
-                      markdownContent: noteContent,
-                      savedAt: new Date().toISOString(),
-                    });
-                  }}
-                  disabled={state.kind === 'offline-readonly' || isPending}
-                />
-              </label>
-              <label className="field-label">
-                Markdown
-                <textarea
-                  aria-label="Markdown 内容"
-                  className="editor-input"
-                  value={noteContent}
-                  onChange={(event) => {
-                    const nextContent = event.target.value;
-                    setNoteContent(nextContent);
-                    saveDraft({
-                      noteId: currentNote.id,
-                      title: noteTitle,
-                      markdownContent: nextContent,
-                      savedAt: new Date().toISOString(),
-                    });
-                  }}
-                  disabled={state.kind === 'offline-readonly' || isPending}
-                />
-              </label>
-              <div className="cta-row compact-actions">
-                <button
-                  className="primary-button"
-                  type="button"
-                  disabled={state.kind === 'offline-readonly' || isPending}
-                  onClick={() => {
-                    startTransition(async () => {
-                      try {
-                        const metadata = await getSyncService().enqueue({
-                          resourceId: currentNote.id,
-                          resourceType: 'note',
-                          localVersion: (currentSyncMetadata?.localVersion ?? currentNote.version) + 1,
-                          cloudVersion: currentNote.version,
-                          contentHash: buildSyncContentHash(`${noteTitle}\n${noteContent}`),
-                          payload: {
-                            knowledgeBaseId: currentNote.knowledgeBaseId,
+            <div className="editor-surface">
+              <input
+                aria-label="笔记标题"
+                className="editor-title-input"
+                value={noteTitle}
+                onChange={(event) => {
+                  const nextTitle = event.target.value;
+                  setNoteTitle(nextTitle);
+                  saveDraft({
+                    noteId: currentNote.id,
+                    title: nextTitle,
+                    markdownContent: noteContent,
+                    savedAt: new Date().toISOString(),
+                  });
+                }}
+                disabled={state.kind === 'offline-readonly' || isPending}
+              />
+              <textarea
+                aria-label="Markdown 内容"
+                className="editor-input markdown-editor"
+                value={noteContent}
+                onChange={(event) => {
+                  const nextContent = event.target.value;
+                  setNoteContent(nextContent);
+                  saveDraft({
+                    noteId: currentNote.id,
+                    title: noteTitle,
+                    markdownContent: nextContent,
+                    savedAt: new Date().toISOString(),
+                  });
+                }}
+                disabled={state.kind === 'offline-readonly' || isPending}
+              />
+            </div>
+          ) : (
+            <div className="editor-empty">
+              <h2>选择一条笔记</h2>
+              <p>选中左侧笔记后可查看和编辑 Markdown 内容。</p>
+            </div>
+          )}
+          <footer className="editor-footer">
+            <span>{state.kind === 'offline-readonly' ? '离线只读，本地草稿仍会保留。' : '本地草稿自动保留。'}</span>
+            <span>{currentNote ? `${noteContent.length} chars` : '0 chars'}</span>
+            {currentSyncMetadata ? (
+              <span>
+                {formatSyncStatus(currentSyncMetadata.syncStatus)} / local {currentSyncMetadata.localVersion} / cloud{' '}
+                {currentSyncMetadata.cloudVersion ?? 'unknown'}
+              </span>
+            ) : null}
+            {currentNote ? (
+              <button
+                className="notegen-text-button save-button"
+                type="button"
+                disabled={state.kind === 'offline-readonly' || isPending}
+                onClick={() => {
+                  startTransition(async () => {
+                    try {
+                      const metadata = await getSyncService().enqueue({
+                        resourceId: currentNote.id,
+                        resourceType: 'note',
+                        localVersion: (currentSyncMetadata?.localVersion ?? currentNote.version) + 1,
+                        cloudVersion: currentNote.version,
+                        contentHash: buildSyncContentHash(`${noteTitle}\n${noteContent}`),
+                        payload: {
+                          knowledgeBaseId: currentNote.knowledgeBaseId,
+                          title: noteTitle,
+                          markdownContent: noteContent,
+                          folderId: currentNote.folderId,
+                        },
+                        execute: async () => {
+                          const saved = await updateNote(bootstrap.session, currentNote.id, {
                             title: noteTitle,
                             markdownContent: noteContent,
                             folderId: currentNote.folderId,
-                          },
-                          execute: async () => {
-                            const saved = await updateNote(bootstrap.session, currentNote.id, {
-                              title: noteTitle,
-                              markdownContent: noteContent,
-                              folderId: currentNote.folderId,
-                              expectedVersion: currentNote.version,
-                              expectedContentHash: currentNote.contentHash,
-                            });
-                            setTree((currentTree) => (currentTree ? buildNextTree(currentTree, saved) : currentTree));
-                            setSelectedNoteId(saved.id);
-                            setNoteTitle(saved.title);
-                            setNoteContent(saved.markdownContent);
-                            clearDraft(saved.id);
-                            broadcastRef.current?.postMessage({
-                              type: 'note-synced',
-                              knowledgeBaseId: saved.knowledgeBaseId,
-                            });
-                            return {
-                              cloudVersion: saved.version,
-                              contentHash: saved.contentHash,
-                            };
-                          },
-                        });
+                            expectedVersion: currentNote.version,
+                            expectedContentHash: currentNote.contentHash,
+                          });
+                          setTree((currentTree) => (currentTree ? buildNextTree(currentTree, saved) : currentTree));
+                          setSelectedNoteId(saved.id);
+                          setNoteTitle(saved.title);
+                          setNoteContent(saved.markdownContent);
+                          clearDraft(saved.id);
+                          broadcastRef.current?.postMessage({
+                            type: 'note-synced',
+                            knowledgeBaseId: saved.knowledgeBaseId,
+                          });
+                          return {
+                            cloudVersion: saved.version,
+                            contentHash: saved.contentHash,
+                          };
+                        },
+                      });
 
-                        if (metadata.syncStatus === 'synced') {
-                          setWorkspaceMessage('笔记已同步到云端。');
-                        } else if (metadata.syncStatus === 'pending') {
-                          saveDraft({
-                            noteId: currentNote.id,
-                            title: noteTitle,
-                            markdownContent: noteContent,
-                            savedAt: new Date().toISOString(),
-                          });
-                          setWorkspaceMessage('网络暂不可用，变更已进入待同步队列。');
-                        } else if (metadata.syncStatus === 'conflict') {
-                          saveDraft({
-                            noteId: currentNote.id,
-                            title: noteTitle,
-                            markdownContent: noteContent,
-                            savedAt: new Date().toISOString(),
-                          });
-                          setWorkspaceMessage('检测到云端版本更新，当前已记录冲突。');
-                        } else {
-                          setWorkspaceMessage('同步失败，请检查权限或稍后重试。');
-                        }
-                      } catch (error) {
+                      if (metadata.syncStatus === 'synced') {
+                        setWorkspaceMessage('笔记已同步到云端。');
+                      } else if (metadata.syncStatus === 'pending') {
                         saveDraft({
                           noteId: currentNote.id,
                           title: noteTitle,
                           markdownContent: noteContent,
                           savedAt: new Date().toISOString(),
                         });
-                        setWorkspaceMessage(error instanceof Error ? error.message : '保存笔记失败。');
+                        setWorkspaceMessage('网络暂不可用，变更已进入待同步队列。');
+                      } else if (metadata.syncStatus === 'conflict') {
+                        saveDraft({
+                          noteId: currentNote.id,
+                          title: noteTitle,
+                          markdownContent: noteContent,
+                          savedAt: new Date().toISOString(),
+                        });
+                        setWorkspaceMessage('检测到云端版本更新，当前已记录冲突。');
+                      } else {
+                        setWorkspaceMessage('同步失败，请检查权限或稍后重试。');
+                      }
+                    } catch (error) {
+                      saveDraft({
+                        noteId: currentNote.id,
+                        title: noteTitle,
+                        markdownContent: noteContent,
+                        savedAt: new Date().toISOString(),
+                      });
+                      setWorkspaceMessage(error instanceof Error ? error.message : '保存笔记失败。');
+                    }
+                  });
+                }}
+              >
+                保存
+              </button>
+            ) : null}
+          </footer>
+        </section>
+
+        <aside className="notegen-chat-pane" aria-label="AI 与同步">
+          <div className="chat-header">
+            <strong>AI Chat</strong>
+            <span>RAG</span>
+          </div>
+          <div className="chat-thread">
+            <div className="chat-message assistant">
+              <strong>Workspace</strong>
+              <p>{workspaceMessage ?? '当前工作区已连接浏览器端数据和 Supabase API。'}</p>
+            </div>
+            <div className="chat-message user">
+              <strong>当前用户</strong>
+              <p>{bootstrap.session.user.email}</p>
+            </div>
+            <div className="chat-message assistant">
+              <strong>同步</strong>
+              <p>待同步 {pendingSyncCount} 个，冲突 {conflicts.length} 个，模式 {bootstrap.workspace.mode}。</p>
+            </div>
+          </div>
+
+          <div className="conflict-box">
+            <h2>同步冲突</h2>
+            {activeConflict && state.kind === 'authenticated' && currentNote ? (
+              <div className="conflict-actions">
+                <button
+                  className="notegen-text-button"
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => {
+                    startTransition(async () => {
+                      try {
+                        await adoptCloudVersion(activeConflict);
+                      } catch (error) {
+                        setWorkspaceMessage(error instanceof Error ? error.message : '采用云端版本失败。');
                       }
                     });
                   }}
                 >
-                  保存笔记
+                  采用云端
                 </button>
-                <span className="status-note">
-                  {state.kind === 'offline-readonly' ? '当前为离线只读模式，本地草稿仍会保留。' : '编辑器会自动保留本地草稿。'}
-                </span>
+                <button
+                  className="notegen-text-button primary"
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => {
+                    startTransition(async () => {
+                      try {
+                        await keepLocalVersion(activeConflict);
+                      } catch (error) {
+                        setWorkspaceMessage(error instanceof Error ? error.message : '重新提交本地版本失败。');
+                      }
+                    });
+                  }}
+                >
+                  保留本地
+                </button>
               </div>
-              {currentSyncMetadata ? (
-                <p className="status-note">
-                  同步状态：{formatSyncStatus(currentSyncMetadata.syncStatus)} · 本地版本 {currentSyncMetadata.localVersion} · 云端版本{' '}
-                  {currentSyncMetadata.cloudVersion ?? 'unknown'}
-                </p>
-              ) : null}
-            </div>
-          ) : (
-            <p className="panel-copy">选择一条笔记后可在这里查看和编辑 Markdown 内容。</p>
-          )}
-        </article>
-
-        <article className="panel-card">
-          <h2 className="panel-title">同步冲突</h2>
-          {activeConflict && state.kind === 'authenticated' && currentNote ? (
-            <div className="cta-row compact-actions">
-              <button
-                className="secondary-button"
-                type="button"
-                disabled={isPending}
-                onClick={() => {
-                  startTransition(async () => {
-                    try {
-                      await adoptCloudVersion(activeConflict);
-                    } catch (error) {
-                      setWorkspaceMessage(error instanceof Error ? error.message : '采用云端版本失败。');
-                    }
-                  });
-                }}
-              >
-                采用云端版本
-              </button>
-              <button
-                className="primary-button"
-                type="button"
-                disabled={isPending}
-                onClick={() => {
-                  startTransition(async () => {
-                    try {
-                      await keepLocalVersion(activeConflict);
-                    } catch (error) {
-                      setWorkspaceMessage(error instanceof Error ? error.message : '重新提交本地版本失败。');
-                    }
-                  });
-                }}
-              >
-                保留本地并重提
-              </button>
-            </div>
-          ) : null}
-          {conflicts.length > 0 ? (
-            <ul className="workspace-list">
-              {conflicts.slice(0, 5).map((record) => (
-                <li key={record.resourceId}>
-                  <div className={record.resourceId === selectedNoteId ? 'workspace-item active' : 'workspace-item'}>
-                    <strong>{record.resourceId}</strong>
-                    <span className="status-note">{describeConflict(record, selectedNoteId)}</span>
-                    <span className="status-note">记录时间：{new Date(record.createdAt).toLocaleString('zh-CN')}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="panel-copy">当前没有待处理的同步冲突。</p>
-          )}
-        </article>
-      </section>
+            ) : null}
+            {conflicts.length > 0 ? (
+              <ul className="workspace-list compact-list">
+                {conflicts.slice(0, 5).map((record) => (
+                  <li key={record.resourceId}>
+                    <div className={record.resourceId === selectedNoteId ? 'workspace-item active' : 'workspace-item'}>
+                      <strong>{record.resourceId}</strong>
+                      <span>{describeConflict(record, selectedNoteId)}</span>
+                      <span>{new Date(record.createdAt).toLocaleString('zh-CN')}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-note">当前没有待处理的同步冲突。</p>
+            )}
+          </div>
+        </aside>
+      </div>
     </main>
   );
 
