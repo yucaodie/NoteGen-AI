@@ -93,6 +93,27 @@ describe('createAuthService', () => {
       expect(result.message).toContain('Confirmation mail sent');
     }
   });
+
+  it('explains missing sign-in sessions as pending email confirmation', async () => {
+    const fetchMock = vi.fn(async (input: URL | string) => {
+      const url = input.toString();
+
+      if (url.includes('/auth/v1/token?grant_type=password')) {
+        return jsonResponse({
+          user: {
+            id: 'user-2',
+            email: 'pending@example.com',
+          },
+        });
+      }
+
+      throw new Error(`Unexpected request: ${url}`);
+    });
+
+    const service = createAuthService(env, fetchMock as typeof fetch);
+
+    await expect(service.signIn('pending@example.com', 'password-123')).rejects.toThrow('请先确认邮箱后再登录');
+  });
 });
 
 function jsonResponse(body: unknown, init?: { status?: number }) {

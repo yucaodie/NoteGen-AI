@@ -48,6 +48,26 @@ describe('realtime-sync', () => {
     ).toBe('wss://demo.supabase.co/realtime/v1/websocket?apikey=anon-key&log_level=error&vsn=1.0.0');
   });
 
+  it('skips subscriptions when Supabase realtime config is missing', () => {
+    const webSocketFactory = vi.fn(() => new FakeSocket());
+
+    const dispose = createRealtimeSyncSubscription({
+      accessToken: 'access-token',
+      config: { url: '', anonKey: '' },
+      onKnowledgeBaseChange: vi.fn(),
+      webSocketFactory,
+    });
+
+    expect(webSocketFactory).not.toHaveBeenCalled();
+    expect(dispose()).toBeUndefined();
+  });
+
+  it('throws a clear error for invalid realtime websocket urls', () => {
+    expect(() => buildRealtimeSyncWebSocketUrl({ url: '', anonKey: 'anon-key' })).toThrow(
+      'Supabase realtime configuration is missing or invalid.',
+    );
+  });
+
   it('extracts the target knowledge base from postgres change payloads', () => {
     expect(
       extractKnowledgeBaseIdFromRealtimeMessage(

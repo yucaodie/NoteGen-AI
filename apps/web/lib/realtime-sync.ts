@@ -30,6 +30,10 @@ type RealtimeSyncOptions = {
 
 export function createRealtimeSyncSubscription(options: RealtimeSyncOptions) {
   const config = options.config ?? getSupabaseBrowserConfig();
+  if (!isValidRealtimeConfig(config)) {
+    return () => {};
+  }
+
   const timerScope = typeof window === 'undefined' ? globalThis : window;
   const webSocketFactory =
     options.webSocketFactory ??
@@ -154,6 +158,10 @@ export function createRealtimeSyncSubscription(options: RealtimeSyncOptions) {
 }
 
 export function buildRealtimeSyncWebSocketUrl(config: SupabaseBrowserConfig) {
+  if (!isValidRealtimeConfig(config)) {
+    throw new Error('Supabase realtime configuration is missing or invalid.');
+  }
+
   const url = new URL(config.url);
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
   url.pathname = '/realtime/v1/websocket';
@@ -163,6 +171,19 @@ export function buildRealtimeSyncWebSocketUrl(config: SupabaseBrowserConfig) {
     vsn: '1.0.0',
   }).toString();
   return url.toString();
+}
+
+function isValidRealtimeConfig(config: SupabaseBrowserConfig) {
+  if (!config.url || !config.anonKey) {
+    return false;
+  }
+
+  try {
+    new URL(config.url);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function extractKnowledgeBaseIdFromRealtimeMessage(input: string) {

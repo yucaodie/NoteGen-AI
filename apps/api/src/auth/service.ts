@@ -383,10 +383,7 @@ function mapUser(user: SupabaseAuthUser): AuthUser {
 
 function mapSession(payload: SupabaseSessionResponse): AuthSession {
   if (!payload.access_token || !payload.refresh_token || !payload.user) {
-    const error = new Error(payload.error_description ?? payload.msg ?? 'Session was not created') as SupabaseAuthError;
-    error.code = 'auth_failed';
-    error.statusCode = 401;
-    throw error;
+    throw createMissingSessionError(payload);
   }
 
   return {
@@ -407,6 +404,17 @@ function mapSignUpSession(payload: SupabaseSessionResponse): AuthSession | null 
   }
 
   return mapSession(payload);
+}
+
+function createMissingSessionError(payload: SupabaseSessionResponse): SupabaseAuthError {
+  const message =
+    payload.error_description ??
+    payload.msg ??
+    (payload.user ? '账号尚未创建登录会话，请先确认邮箱后再登录。' : '登录会话创建失败，请检查邮箱和密码。');
+  const error = new Error(message) as SupabaseAuthError;
+  error.code = 'auth_failed';
+  error.statusCode = 401;
+  return error;
 }
 
 function buildPendingEmailConfirmation(
