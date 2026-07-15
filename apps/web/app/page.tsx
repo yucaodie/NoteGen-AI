@@ -1,9 +1,9 @@
 import Link from 'next/link';
 
 const pillars = [
-  ['多用户隔离', 'Supabase Auth + RLS 作为最终授权层'],
-  ['浏览器编辑', '草稿缓存和知识树交互优先'],
-  ['开放接口', '知识库共享与 RAG API 并行推进'],
+  ['用户管理', '邮箱注册登录、会话恢复和默认工作区初始化'],
+  ['云端知识库', '知识库、目录和 Markdown 笔记通过 API 持久化'],
+  ['同步与 RAG', '增量同步、权限过滤检索和开发者 API Key'],
 ];
 
 const stack = ['Next.js Frontend', 'Node.js API Service', 'Supabase', 'pgvector'];
@@ -17,14 +17,14 @@ export default function HomePage() {
             <p className="eyebrow">SupaNoteGen Web Platform</p>
             <h1 className="hero-title">把 NoteGen 的内容体验升级为云端知识产品</h1>
             <p className="hero-copy">
-              当前仓库已经进入基础工程阶段。前端、独立 API 服务、Supabase 权限底座和 UI 验证基线会从这里开始建立。
+              浏览器端承载 NoteGen 风格的知识工作区，Node.js API 负责业务编排，Supabase 提供认证、RLS 数据隔离和 pgvector 检索底座。
             </p>
             <div className="cta-row">
               <Link className="primary-button" href="/auth">
                 登录云端工作区
               </Link>
               <Link className="primary-button" href="/workspace">
-                进入工作区壳层
+                进入工作区
               </Link>
               <Link className="secondary-button" href="/developers">
                 查看开放接口方向
@@ -51,15 +51,15 @@ export default function HomePage() {
             {stack.map((item) => (
               <li className="stack-item" key={item}>
                 <span>{item}</span>
-                <span className="status-note">已纳入当前规格</span>
+                <span className="status-note">已接入当前应用</span>
               </li>
             ))}
           </ul>
         </article>
         <article className="panel-card">
-          <h2 className="panel-title">验证要求</h2>
+          <h2 className="panel-title">真实链路</h2>
           <p className="panel-copy">
-            当前实施会优先建设 UI 点击路径验证，确保首页关键按钮与后续工作区入口具备可执行的回归测试。
+            登录后进入云端工作区，所有知识库、文件夹、笔记、同步事件、共享关系和 RAG 访问都通过后端 API 与 Supabase 权限策略处理。
           </p>
         </article>
       </section>

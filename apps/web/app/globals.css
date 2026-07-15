@@ -362,7 +362,7 @@ button {
 
 .notegen-titlebar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto;
+  grid-template-columns: minmax(180px, 1fr) minmax(0, auto) auto;
   align-items: center;
   gap: 12px;
   height: 36px;
@@ -391,6 +391,8 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .icon-button,
@@ -406,15 +408,18 @@ button {
 
 .icon-button {
   display: inline-flex;
-  width: 30px;
+  min-width: 30px;
   height: 26px;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   border-color: #cfd6d0;
   border-radius: 6px;
   background: #ffffff;
-  font-size: 0.68rem;
-  font-weight: 800;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0 9px;
+  white-space: nowrap;
 }
 
 .icon-button.primary,
@@ -442,7 +447,7 @@ button {
 
 .notegen-shell {
   display: grid;
-  grid-template-columns: 44px 300px minmax(0, 1fr) 320px;
+  grid-template-columns: 54px 300px minmax(0, 1fr) 340px;
   height: calc(100vh - 36px);
   min-height: 620px;
 }
@@ -458,12 +463,14 @@ button {
 }
 
 .rail-button {
-  width: 32px;
-  height: 32px;
+  width: 42px;
+  min-height: 34px;
   border-radius: 8px;
   color: #647066;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 700;
+  line-height: 1.1;
+  padding: 4px 2px;
 }
 
 .rail-button.active,
@@ -690,6 +697,22 @@ button {
   background: #f8faf7;
 }
 
+.side-panel-scroll {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+
+.notegen-chat-pane .panel-card {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.notegen-chat-pane .panel-card + .panel-card,
+.notegen-chat-pane .collaboration-panels + .collaboration-panels {
+  margin-top: 12px;
+}
+
 .chat-header {
   justify-content: space-between;
   padding: 0 12px;
@@ -774,13 +797,18 @@ button {
   }
 
   .notegen-shell {
-    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-columns: 48px minmax(0, 1fr);
     height: auto;
     min-height: calc(100vh - 44px);
   }
 
   .notegen-rail {
     min-height: calc(100vh - 44px);
+  }
+
+  .rail-button {
+    width: 36px;
+    font-size: 0.68rem;
   }
 
   .notegen-left-pane,
