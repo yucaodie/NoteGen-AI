@@ -15,7 +15,12 @@
         "name": "next"
       }
     ],
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@supanotegen/shared": ["../../packages/shared/src/index.ts"]
+    }
   },
   "include": [
     "next-env.d.ts",
@@ -24,6 +29,11 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "tests/**/*"
   ]
 }
