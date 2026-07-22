@@ -23,7 +23,7 @@ export default function HomePage() {
               <Link className="primary-button" href="/auth">
                 登录云端工作区
               </Link>
-              <Link className="primary-button" href="/workspace">
+              <Link className="primary-button" href="/core/main">
                 进入工作区
               </Link>
               <Link className="secondary-button" href="/developers">

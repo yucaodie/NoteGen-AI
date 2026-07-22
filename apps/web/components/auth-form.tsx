@@ -62,7 +62,7 @@ export function AuthForm() {
                 const bootstrap = result;
                 saveStoredSession(bootstrap.session);
                 saveStoredWorkspace(bootstrap);
-                router.push('/workspace');
+                router.push('/core/main');
                 router.refresh();
               } catch (error) {
                 setErrorMessage(error instanceof Error ? error.message : '认证失败，请稍后重试。');
