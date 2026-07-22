@@ -2,48 +2,42 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import type { Layout, PanelImperativeHandle } from 'react-resizable-panels';
+import type { Layout } from 'react-resizable-panels';
 import { LeftSidebar } from './left-sidebar';
 import { EditorLayout } from './editor/editor-layout';
 import Chat from './chat';
 import { useSidebarStore } from '@/stores/sidebar';
 
-function getDefaultLayout(layoutKey: string) {
-  if (typeof window === 'undefined') return [30, 40, 30];
+const DEFAULT_LAYOUTS: Record<string, number[]> = {
+  'left-center-right': [20, 50, 30],
+  'left-center': [30, 70, 0],
+  'center-right': [0, 60, 40],
+  'left-right': [50, 0, 50],
+  left: [100, 0, 0],
+  center: [0, 100, 0],
+  right: [0, 0, 100],
+};
+
+function loadPersistedLayout(layoutKey: string): number[] {
+  if (typeof window === 'undefined') return getDefaultLayout(layoutKey);
   const storageKey = `react-resizable-panels:main-layout:${layoutKey}`;
-  const layout = localStorage.getItem(storageKey);
-
-  if (layout) {
-    try {
-      const parsed = JSON.parse(layout);
-      const sum = parsed.reduce((a: number, b: number) => a + b, 0);
-      if (Math.abs(sum - 100) < 0.1) {
-        return parsed;
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.length === 3) {
+        const sum = parsed.reduce((a: number, b: number) => a + b, 0);
+        if (Math.abs(sum - 100) < 0.1) return parsed;
       }
-      localStorage.removeItem(storageKey);
-    } catch {
-      // ignore
     }
+  } catch {
+    // ignore
   }
+  return getDefaultLayout(layoutKey);
+}
 
-  switch (layoutKey) {
-    case 'left-center-right':
-      return [20, 50, 30];
-    case 'left-center':
-      return [30, 70, 0];
-    case 'center-right':
-      return [0, 60, 40];
-    case 'left-right':
-      return [50, 0, 50];
-    case 'left':
-      return [100, 0, 0];
-    case 'center':
-      return [0, 100, 0];
-    case 'right':
-      return [0, 0, 100];
-    default:
-      return [30, 40, 30];
-  }
+function getDefaultLayout(layoutKey: string): number[] {
+  return DEFAULT_LAYOUTS[layoutKey] || [30, 40, 30];
 }
 
 export default function MainPage() {
@@ -54,9 +48,9 @@ export default function MainPage() {
     initSidebarState,
   } = useSidebarStore();
 
-  const leftPanelRef = useRef<PanelImperativeHandle>(null);
-  const centerPanelRef = useRef<PanelImperativeHandle>(null);
-  const rightPanelRef = useRef<PanelImperativeHandle>(null);
+  const leftPanelRef = useRef<any>(null);
+  const centerPanelRef = useRef<any>(null);
+  const rightPanelRef = useRef<any>(null);
 
   const MIN_SIDEBAR_WIDTH_PX = 280;
   const MIN_EDITOR_WIDTH_PX = 400;
@@ -70,16 +64,11 @@ export default function MainPage() {
   ].filter(Boolean);
   const layoutKey = visiblePanels.join('-') || 'center';
 
-  const calculateMinSizes = () => {
-    const windowWidth = window.innerWidth;
-    const minSidebarPercent = Math.max(15, (MIN_SIDEBAR_WIDTH_PX / windowWidth) * 100);
-    const minEditorPercent = Math.max(25, (MIN_EDITOR_WIDTH_PX / windowWidth) * 100);
-    setMinSidebarSize(Math.min(minSidebarPercent, 40));
-    setMinEditorSize(Math.min(minEditorPercent, 50));
-  };
+  const [layout, setLayout] = useState<number[]>(() => getDefaultLayout(layoutKey));
 
   useEffect(() => {
     initSidebarState();
+    setLayout(loadPersistedLayout(layoutKey));
     calculateMinSizes();
 
     window.addEventListener('resize', calculateMinSizes);
@@ -104,18 +93,20 @@ export default function MainPage() {
     return () => clearTimeout(timer);
   }, [leftSidebarVisible, centerPanelVisible, rightSidebarVisible]);
 
-  const getActualLayout = () => {
-    const savedLayout = getDefaultLayout(layoutKey);
-    if (savedLayout.length === 3) return savedLayout;
-    return [30, 40, 30];
-  };
+  function calculateMinSizes() {
+    const windowWidth = window.innerWidth;
+    const minSidebarPercent = Math.max(15, (MIN_SIDEBAR_WIDTH_PX / windowWidth) * 100);
+    const minEditorPercent = Math.max(25, (MIN_EDITOR_WIDTH_PX / windowWidth) * 100);
+    setMinSidebarSize(Math.min(minSidebarPercent, 40));
+    setMinEditorSize(Math.min(minEditorPercent, 50));
+  }
 
-  const actualLayout = getActualLayout();
-
-  const onLayout = (layout: Layout) => {
+  const onLayout = (newLayout: Layout) => {
     const storageKey = `react-resizable-panels:main-layout:${layoutKey}`;
-    const sizes = ['left', 'center', 'right'].map((id) => layout[id] ?? 0);
-    localStorage.setItem(storageKey, JSON.stringify(sizes));
+    const sizes = ['left', 'center', 'right'].map((id) => newLayout[id] ?? 0);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(storageKey, JSON.stringify(sizes));
+    }
   };
 
   let panelIndex = 0;
@@ -124,8 +115,9 @@ export default function MainPage() {
   const shouldShowRightHandle = centerPanelVisible && rightSidebarVisible;
 
   return (
-    <div className="h-screen w-screen overflow-hidden">
+    <div className="h-screen w-screen overflow-hidden" suppressHydrationWarning>
       <ResizablePanelGroup
+        id="main-group"
         orientation="horizontal"
         onLayout={onLayout}
         className="h-full w-full"
@@ -133,7 +125,7 @@ export default function MainPage() {
         <ResizablePanel
           id="left"
           panelRef={leftPanelRef}
-          defaultSize={`${actualLayout[panelIndex++]}%`}
+          defaultSize={`${layout[panelIndex++]}%`}
           minSize={`${minSidebarSize}%`}
           collapsible
           collapsedSize="0%"
@@ -146,7 +138,7 @@ export default function MainPage() {
         <ResizablePanel
           id="center"
           panelRef={centerPanelRef}
-          defaultSize={`${actualLayout[panelIndex++]}%`}
+          defaultSize={`${layout[panelIndex++]}%`}
           minSize={`${minEditorSize}%`}
           collapsible
           collapsedSize="0%"
@@ -159,7 +151,7 @@ export default function MainPage() {
         <ResizablePanel
           id="right"
           panelRef={rightPanelRef}
-          defaultSize={`${actualLayout[panelIndex++]}%`}
+          defaultSize={`${layout[panelIndex++]}%`}
           minSize={`${minSidebarSize}%`}
           collapsible
           collapsedSize="0%"
