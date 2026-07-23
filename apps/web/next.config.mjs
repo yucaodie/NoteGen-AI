@@ -6,11 +6,18 @@ const nextConfig = {
   reactStrictMode: false,
   devIndicators: false,
   eslint: { ignoreDuringBuilds: true },
+  experimental: { instrumentationHook: true },
   images: {
     unoptimized: true,
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.fallback = { fs: false, path: false, os: false };
+    if (isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@antv/infographic': '/workspace/apps/web/lib/empty-stub.ts',
+      };
+    }
     return config;
   },
   async rewrites() {
