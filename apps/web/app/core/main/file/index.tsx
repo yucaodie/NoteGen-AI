@@ -1,396 +1,288 @@
-'use client';
+'use client'
 
-import { useState, useCallback } from 'react';
-import { useArticleStore } from '@/stores/article';
+import React, { useEffect, useState, useCallback, useRef } from "react"
+import { FileManager } from "./file-manager"
+import { FileFooter } from "./file-footer"
+import useArticleStore from "@/stores/article"
+import useClipboardStore from "@/stores/clipboard"
+import { isMobileDevice } from "@/lib/check"
+import { platform } from "@tauri-apps/plugin-os"
+import { isEditableKeyboardTarget } from "@/lib/is-editable-keyboard-target"
+import { flattenFileTree, getFileSelectionEntries, toClipboardItems } from "./file-selection"
+import { useShallow } from 'zustand/react/shallow'
 
-function FileItem({
-  id,
-  name,
-  onSelect,
-}: {
-  id: string;
-  name: string;
-  onSelect: (id: string) => void;
-}) {
-  const { renameNode, deleteNode } = useArticleStore();
-  const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState(name);
-  const [showMenu, setShowMenu] = useState(false);
+type Platform = 'macos' | 'windows' | 'linux' | 'unknown'
 
-  const handleRename = useCallback(() => {
-    if (editName.trim() && editName.trim() !== name) {
-      renameNode(id, editName.trim());
+/**
+ * 统一的文件管理器快捷键处理
+ * 只有当文件管理器区域获得焦点时才响应快捷键
+ */
+function useFileManagerShortcuts() {
+  const { activeFilePath, fileTree, selectedFilePaths } = useArticleStore(useShallow((state) => ({
+    activeFilePath: state.activeFilePath,
+    fileTree: state.fileTree,
+    selectedFilePaths: state.selectedFilePaths,
+  })))
+  const { setClipboardItem, setClipboardItems } = useClipboardStore()
+  const [currentPlatform, setCurrentPlatform] = useState<Platform>('unknown')
+  const [isFocused, setIsFocused] = useState(false)
+  const sidebarRef = useRef<HTMLDivElement>(null)
+
+  // 检测当前平台
+  useEffect(() => {
+    try {
+      const p = platform()
+      if (p === 'macos') {
+        setCurrentPlatform('macos')
+      } else if (p === 'windows') {
+        setCurrentPlatform('windows')
+      } else if (p === 'linux') {
+        setCurrentPlatform('linux')
+      }
+    } catch {
+      setCurrentPlatform('unknown')
     }
-    setEditing(false);
-  }, [id, name, editName, renameNode]);
+  }, [])
 
-  return (
-    <div
-      className="group flex items-center gap-1.5 rounded px-2 py-1 text-sm hover:bg-accent cursor-pointer relative"
-      onClick={() => onSelect(id)}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        setShowMenu(true);
-      }}
-    >
-      <span>📄</span>
-      {editing ? (
-        <input
-          className="min-w-0 flex-1 rounded border bg-background px-1 text-sm"
-          value={editName}
-          onChange={(e) => setEditName(e.target.value)}
-          onBlur={handleRename}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleRename();
-            if (e.key === 'Escape') setEditing(false);
-          }}
-          autoFocus
-          onClick={(e) => e.stopPropagation()}
-        />
-      ) : (
-        <span className="truncate">{name}</span>
-      )}
-      <div className="ml-auto hidden gap-0.5 group-hover:flex">
-        <button
-          type="button"
-          className="rounded px-1 text-xs text-muted-foreground hover:text-foreground"
-          title="重命名"
-          onClick={(e) => {
-            e.stopPropagation();
-            setEditName(name);
-            setEditing(true);
-          }}
-        >
-          ✎
-        </button>
-        <button
-          type="button"
-          className="rounded px-1 text-xs text-muted-foreground hover:text-destructive"
-          title="删除"
-          onClick={(e) => {
-            e.stopPropagation();
-            deleteNode(id);
-          }}
-        >
-          ✕
-        </button>
-      </div>
-      {showMenu && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setShowMenu(false)}
-          />
-          <div className="absolute right-0 top-full z-50 min-w-[120px] rounded-md border bg-popover p-1 shadow-md">
-            <button
-              type="button"
-              className="w-full rounded px-2 py-1 text-left text-sm hover:bg-accent"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditName(name);
-                setEditing(true);
-                setShowMenu(false);
-              }}
-            >
-              重命名
-            </button>
-            <button
-              type="button"
-              className="w-full rounded px-2 py-1 text-left text-sm text-destructive hover:bg-accent"
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteNode(id);
-                setShowMenu(false);
-              }}
-            >
-              删除
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function FolderItem({
-  id,
-  name,
-  children,
-  defaultExpanded,
-  onSelect,
-}: {
-  id: string;
-  name: string;
-  children?: Array<{ id: string; name: string; type: 'file' | 'folder'; children?: Array<{ id: string; name: string; type: 'file' | 'folder'; children?: any[] }> }>;
-  defaultExpanded: boolean;
-  onSelect: (id: string) => void;
-}) {
-  const { toggleExpanded, renameNode, deleteNode, createFile, createFolder } = useArticleStore();
-  const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState(name);
-  const [expanded, setExpanded] = useState(defaultExpanded);
-  const [showMenu, setShowMenu] = useState(false);
-  const [showNewInput, setShowNewInput] = useState<'file' | 'folder' | null>(null);
-  const [newName, setNewName] = useState('');
-
-  const handleToggle = useCallback(() => {
-    setExpanded((prev) => !prev);
-    toggleExpanded(id);
-  }, [id, toggleExpanded]);
-
-  const handleRename = useCallback(() => {
-    if (editName.trim() && editName.trim() !== name) {
-      renameNode(id, editName.trim());
+  // 检查是否按下了正确的修饰键
+  const isModKey = useCallback((e: KeyboardEvent): boolean => {
+    if (currentPlatform === 'macos') {
+      return e.metaKey && !e.ctrlKey
+    } else {
+      return e.ctrlKey && !e.metaKey
     }
-    setEditing(false);
-  }, [id, name, editName, renameNode]);
+  }, [currentPlatform])
 
-  const handleCreate = useCallback(() => {
-    if (!newName.trim()) return;
-    if (showNewInput === 'file') createFile(id, newName.trim());
-    if (showNewInput === 'folder') createFolder(id, newName.trim());
-    setNewName('');
-    setShowNewInput(null);
-  }, [newName, showNewInput, id, createFile, createFolder]);
+  // 获取当前激活的 item（文件或文件夹）
+  const getActiveItem = useCallback((): { path: string; isDirectory: boolean; isLocale: boolean; name: string; sha?: string } | null => {
+    if (!activeFilePath) return null
 
-  return (
-    <div>
-      <div
-        className="group flex items-center gap-1.5 rounded px-2 py-1 text-sm hover:bg-accent cursor-pointer relative"
-        onClick={handleToggle}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          setShowMenu(true);
-        }}
-      >
-        <span className="w-3 text-center text-xs">{expanded ? '▼' : '▶'}</span>
-        <span>📁</span>
-        {editing ? (
-          <input
-            className="min-w-0 flex-1 rounded border bg-background px-1 text-sm"
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            onBlur={handleRename}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleRename();
-              if (e.key === 'Escape') setEditing(false);
-            }}
-            autoFocus
-            onClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          <span className="truncate">{name}</span>
-        )}
-        <div className="ml-auto hidden gap-0.5 group-hover:flex">
-          <button
-            type="button"
-            className="rounded px-1 text-xs text-muted-foreground hover:text-foreground"
-            title="重命名"
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditName(name);
-              setEditing(true);
-            }}
-          >
-            ✎
-          </button>
-          <button
-            type="button"
-            className="rounded px-1 text-xs text-muted-foreground hover:text-destructive"
-            title="删除"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteNode(id);
-            }}
-          >
-            ✕
-          </button>
-        </div>
-        {showMenu && (
-          <>
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setShowMenu(false)}
-            />
-            <div className="absolute right-0 top-full z-50 min-w-[140px] rounded-md border bg-popover p-1 shadow-md">
-              <button
-                type="button"
-                className="w-full rounded px-2 py-1 text-left text-sm hover:bg-accent"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowNewInput('file');
-                  setNewName('');
-                  setShowMenu(false);
-                }}
-              >
-                新建文件
-              </button>
-              <button
-                type="button"
-                className="w-full rounded px-2 py-1 text-left text-sm hover:bg-accent"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowNewInput('folder');
-                  setNewName('');
-                  setShowMenu(false);
-                }}
-              >
-                新建文件夹
-              </button>
-              <hr className="my-1" />
-              <button
-                type="button"
-                className="w-full rounded px-2 py-1 text-left text-sm hover:bg-accent"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditName(name);
-                  setEditing(true);
-                  setShowMenu(false);
-                }}
-              >
-                重命名
-              </button>
-              <button
-                type="button"
-                className="w-full rounded px-2 py-1 text-left text-sm text-destructive hover:bg-accent"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteNode(id);
-                  setShowMenu(false);
-                }}
-              >
-                删除
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-      {expanded && children && (
-        <div className="ml-4">
-          {children.map((child) =>
-            child.type === 'folder' ? (
-              <FolderItem
-                key={child.id}
-                id={child.id}
-                name={child.name}
-                children={child.children}
-                defaultExpanded={false}
-                onSelect={onSelect}
-              />
-            ) : (
-              <FileItem key={child.id} id={child.id} name={child.name} onSelect={onSelect} />
-            ),
-          )}
-          {showNewInput && (
-            <div className="ml-4 flex items-center gap-1 rounded px-2 py-1">
-              <span>{showNewInput === 'folder' ? '📁' : '📄'}</span>
-              <input
-                className="min-w-0 flex-1 rounded border bg-background px-1 text-sm"
-                placeholder={showNewInput === 'folder' ? '文件夹名称' : '文件名称'}
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onBlur={handleCreate}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleCreate();
-                  if (e.key === 'Escape') setShowNewInput(null);
-                }}
-                autoFocus
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+    // 递归查找文件树中匹配的项
+    function findInTree(tree: typeof fileTree, targetPath: string): ReturnType<typeof getActiveItem> {
+      const entry = flattenFileTree(tree).find(item => item.path === targetPath)
+      if (!entry) return null
+      return {
+        path: entry.path,
+        isDirectory: entry.isDirectory,
+        isLocale: entry.isLocale,
+        name: entry.name,
+        sha: entry.sha
+      }
+    }
+
+    return findInTree(fileTree, activeFilePath)
+  }, [activeFilePath, fileTree])
+
+  // 处理快捷键
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // 移动端不处理快捷键
+    if (isMobileDevice()) {
+      return
+    }
+
+    const editableTarget = isEditableKeyboardTarget(e.target)
+    if (editableTarget) {
+      return
+    }
+
+    // 只有文件管理器有焦点时才处理
+    if (!isFocused) {
+      return
+    }
+
+    const selectedEntries = getFileSelectionEntries(fileTree, selectedFilePaths)
+    const allSelectedEntriesAreLocal = selectedEntries.every(entry => entry.isLocale)
+    const activeItem = getActiveItem()
+    if (selectedEntries.length === 0 && (!activeItem || !activeItem.isLocale)) {
+      return
+    }
+
+    const modPressed = isModKey(e)
+
+    // 复制: Cmd+C / Ctrl+C
+    if (modPressed && e.key === 'c') {
+      e.preventDefault()
+      e.stopPropagation()
+      if (selectedEntries.length > 0) {
+        if (allSelectedEntriesAreLocal) {
+          setClipboardItems(toClipboardItems(selectedEntries), 'copy')
+        }
+      } else if (activeItem) {
+        setClipboardItem({
+          path: activeItem.path,
+          name: activeItem.name,
+          isDirectory: activeItem.isDirectory,
+          sha: activeItem.sha,
+          isLocale: activeItem.isLocale
+        }, 'copy')
+      }
+      return
+    }
+
+    // 剪切: Cmd+X / Ctrl+X
+    if (modPressed && e.key === 'x') {
+      e.preventDefault()
+      e.stopPropagation()
+      if (selectedEntries.length > 0) {
+        if (allSelectedEntriesAreLocal) {
+          setClipboardItems(toClipboardItems(selectedEntries), 'cut')
+        }
+      } else if (activeItem) {
+        setClipboardItem({
+          path: activeItem.path,
+          name: activeItem.name,
+          isDirectory: activeItem.isDirectory,
+          sha: activeItem.sha,
+          isLocale: activeItem.isLocale
+        }, 'cut')
+      }
+      return
+    }
+
+    // 粘贴: Cmd+V / Ctrl+V
+    if (modPressed && e.key === 'v') {
+      e.preventDefault()
+      e.stopPropagation()
+      // 触发粘贴操作（通过事件或直接调用）
+      const pasteTargetPath = selectedEntries.length === 1 ? selectedEntries[0].path : activeItem?.path
+      if (pasteTargetPath) {
+        const event = new CustomEvent('filemanager-paste', { detail: { targetPath: pasteTargetPath } })
+        window.dispatchEvent(event)
+      }
+      return
+    }
+
+    // 删除: macOS 使用 Backspace，Windows/Linux 使用 Delete
+    const isDeleteKey = currentPlatform === 'macos'
+      ? e.key === 'Backspace'
+      : e.key === 'Delete'
+
+    if (isDeleteKey) {
+      e.preventDefault()
+      e.stopPropagation()
+      if (selectedEntries.length > 0) {
+        window.dispatchEvent(new CustomEvent('filemanager-delete-selection'))
+      } else if (activeItem) {
+        const event = new CustomEvent('filemanager-delete', { detail: { item: activeItem } })
+        window.dispatchEvent(event)
+      }
+      return
+    }
+
+    // 重命名: macOS 使用 Enter 键，Windows/Linux 使用 F2 键
+    const isRenameKey = currentPlatform === 'macos'
+      ? e.key === 'Enter'
+      : e.key === 'F2'
+
+    if (isRenameKey) {
+      e.preventDefault()
+      e.stopPropagation()
+      const renamePath = selectedEntries.length === 1 ? selectedEntries[0].path : activeItem?.path
+      if (renamePath && selectedEntries.length <= 1) {
+        const event = new CustomEvent('filemanager-rename', { detail: { path: renamePath } })
+        window.dispatchEvent(event)
+      }
+      return
+    }
+  }, [isFocused, getActiveItem, isModKey, currentPlatform, fileTree, selectedFilePaths, setClipboardItem, setClipboardItems])
+
+  // 注册全局快捷键
+  useEffect(() => {
+    if (isMobileDevice() || currentPlatform === 'unknown') {
+      return
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleKeyDown, currentPlatform])
+
+  // 焦点处理
+  const handleFocusIn = useCallback((e: FocusEvent) => {
+    // 检查焦点是否在文件管理器区域内
+    if (sidebarRef.current && sidebarRef.current.contains(e.target as Node)) {
+      setIsFocused(true)
+    }
+  }, [])
+
+  const handleFocusOut = useCallback((e: FocusEvent) => {
+    // 检查焦点是否移到了 sidebar 外部
+    // relatedTarget 是即将获得焦点的元素
+    const newFocusedElement = e.relatedTarget as Node
+
+    if (sidebarRef.current && newFocusedElement) {
+      // 如果新焦点元素不在 sidebar 内，才设置 isFocused = false
+      if (!sidebarRef.current.contains(newFocusedElement)) {
+        setIsFocused(false)
+      }
+    } else if (!newFocusedElement) {
+      // 如果 relatedTarget 为 null（焦点移到了文档外），设置 isFocused = false
+      setIsFocused(false)
+    }
+    // 否则，焦点还在 sidebar 内，保持 isFocused = true
+  }, [])
+
+  useEffect(() => {
+    if (sidebarRef.current) {
+      sidebarRef.current.addEventListener('focusin', handleFocusIn)
+      sidebarRef.current.addEventListener('focusout', handleFocusOut)
+
+      return () => {
+        sidebarRef.current?.removeEventListener('focusin', handleFocusIn)
+        sidebarRef.current?.removeEventListener('focusout', handleFocusOut)
+      }
+    }
+  }, [handleFocusIn, handleFocusOut])
+
+  // 主动设置焦点到文件管理器
+  const focusSidebar = useCallback(() => {
+    setIsFocused(true)
+    // 使用 requestAnimationFrame 确保 DOM 更新后再设置焦点
+    requestAnimationFrame(() => {
+      sidebarRef.current?.focus()
+    })
+  }, [])
+
+  return { sidebarRef, isFocused, focusSidebar }
 }
 
 export function FileSidebar() {
-  const { fileTree, createFile, createFolder, openFile } = useArticleStore();
-  const [showNewInput, setShowNewInput] = useState<'file' | 'folder' | null>(null);
-  const [newName, setNewName] = useState('');
+  const {
+    initCollapsibleList,
+    initSortSettings,
+    initShowCloudFiles,
+    initSyncStaticAssets,
+    initShowKnowledgeBaseStatus,
+  } = useArticleStore(useShallow((state) => ({
+    initCollapsibleList: state.initCollapsibleList,
+    initSortSettings: state.initSortSettings,
+    initShowCloudFiles: state.initShowCloudFiles,
+    initSyncStaticAssets: state.initSyncStaticAssets,
+    initShowKnowledgeBaseStatus: state.initShowKnowledgeBaseStatus,
+  })))
+  const { sidebarRef, focusSidebar } = useFileManagerShortcuts()
 
-  const handleCreate = useCallback(() => {
-    if (!newName.trim()) return;
-    const parentId = 'root';
-    if (showNewInput === 'file') createFile(parentId, newName.trim());
-    if (showNewInput === 'folder') createFolder(parentId, newName.trim());
-    setNewName('');
-    setShowNewInput(null);
-  }, [newName, showNewInput, createFile, createFolder]);
-
-  const handleSelect = useCallback(
-    (id: string) => {
-      openFile(id);
-    },
-    [openFile],
-  );
+  useEffect(() => {
+    initCollapsibleList()
+    initSortSettings()
+    initShowCloudFiles()
+    initSyncStaticAssets()
+    initShowKnowledgeBaseStatus()
+  }, [])
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-1 border-b px-2 py-1">
-        <button
-          type="button"
-          className="rounded px-2 py-1 text-xs hover:bg-accent"
-          title="新建文件"
-          onClick={() => {
-            setShowNewInput('file');
-            setNewName('');
-          }}
-        >
-          新建
-        </button>
-        <button
-          type="button"
-          className="rounded px-2 py-1 text-xs hover:bg-accent"
-          title="新建文件夹"
-          onClick={() => {
-            setShowNewInput('folder');
-            setNewName('');
-          }}
-        >
-          新建目录
-        </button>
+    <div
+      ref={sidebarRef}
+      id="article-sidebar"
+      className="w-full h-full flex flex-col outline-none"
+      tabIndex={-1}
+    >
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        <FileManager focusSidebar={focusSidebar} />
       </div>
-      {showNewInput && (
-        <div className="flex items-center gap-1 border-b px-3 py-1">
-          <span>{showNewInput === 'folder' ? '📁' : '📄'}</span>
-          <input
-            className="min-w-0 flex-1 rounded border bg-background px-1 text-sm"
-            placeholder={showNewInput === 'folder' ? '目录名称' : '文件名称'}
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onBlur={handleCreate}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleCreate();
-              if (e.key === 'Escape') {
-                setShowNewInput(null);
-                setNewName('');
-              }
-            }}
-            autoFocus
-          />
-        </div>
-      )}
-      <div className="flex-1 overflow-auto p-1">
-        {fileTree.map((node) =>
-          node.type === 'folder' ? (
-            <FolderItem
-              key={node.id}
-              id={node.id}
-              name={node.name}
-              children={node.children}
-              defaultExpanded={true}
-              onSelect={handleSelect}
-            />
-          ) : (
-            <FileItem key={node.id} id={node.id} name={node.name} onSelect={handleSelect} />
-          ),
-        )}
-      </div>
-      <div className="border-t p-2 text-xs text-muted-foreground">
-        我的工作区
-      </div>
+      <FileFooter />
     </div>
-  );
+  )
 }

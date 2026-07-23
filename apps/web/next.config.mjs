@@ -3,8 +3,14 @@ const apiBaseUrl = process.env.API_BASE_URL ?? 'http://127.0.0.1:4000';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ['localhost', '127.0.0.1', '*.monkeycode-ai.online'],
+  reactStrictMode: false,
+  devIndicators: false,
+  eslint: { ignoreDuringBuilds: true },
+  images: {
+    unoptimized: true,
+  },
   webpack: (config) => {
-    config.resolve.fallback = { fs: false, path: false };
+    config.resolve.fallback = { fs: false, path: false, os: false };
     return config;
   },
   async rewrites() {

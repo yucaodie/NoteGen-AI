@@ -5,7 +5,7 @@
     "lib": [
       "dom",
       "dom.iterable",
-      "es2022"
+        "es2023"
     ],
     "allowJs": true,
     "incremental": true,
@@ -16,10 +16,27 @@
       }
     ],
     "noEmit": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@supanotegen/shared": ["../../packages/shared/src/index.ts"]
+      "@supanotegen/shared": ["../../packages/shared/src/index.ts"],
+      "@tauri-apps/plugin-store": ["./lib/tauri-shim/store.ts"],
+      "@tauri-apps/plugin-fs": ["./lib/tauri-shim/fs.ts"],
+      "@tauri-apps/plugin-fs/*": ["./lib/tauri-shim/fs.ts"],
+      "@tauri-apps/plugin-dialog": ["./lib/tauri-shim/dialog.ts"],
+      "@tauri-apps/api/path": ["./lib/tauri-shim/path.ts"],
+      "@tauri-apps/api/core": ["./lib/tauri-shim/stubs.ts"],
+      "@tauri-apps/api/path": ["./lib/tauri-shim/path.ts"],
+      "@tauri-apps/api/event": ["./lib/tauri-shim/stubs.ts"],
+      "@tauri-apps/api/webviewWindow": ["./lib/tauri-shim/stubs.ts"],
+      "@tauri-apps/api/app": ["./lib/tauri-shim/stubs.ts"],
+      "@tauri-apps/api/window": ["./lib/tauri-shim/stubs.ts"],
+      "@tauri-apps/api/*": ["./lib/tauri-shim/stubs.ts"],
+      "@tauri-apps/plugin-*": ["./lib/tauri-shim/stubs.ts"],
+      "tauri-plugin-clipboard-api": ["./lib/tauri-shim/stubs.ts"]
     }
   },
   "include": [
