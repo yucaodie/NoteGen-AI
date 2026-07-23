@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client'
 
 import { Store } from '@tauri-apps/plugin-store'

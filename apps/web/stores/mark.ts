@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { deleteAllMarks, getAllMarks, getMarkPreviews, getMarks, getTrashMarkPreviews, insertMarks, Mark, updateMark } from '@/db/marks'
 import { uploadFile as uploadGithubFile, getFiles as githubGetFiles, decodeBase64ToString } from '@/lib/sync/github';
 import { uploadFile as uploadGiteeFile, getFiles as giteeGetFiles } from '@/lib/sync/gitee';

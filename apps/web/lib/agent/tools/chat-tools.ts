@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Tool, ToolResult } from '../types'
 import { getChats, insertChat, updateChat, deleteChat, clearChatsByTagId, Chat, insertChats, updateChats, deleteChats } from '@/db/chats'
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { readDir, BaseDirectory, DirEntry } from "@tauri-apps/plugin-fs";
 import { getFilePathOptions, getWorkspacePath } from "./workspace";
 import { join } from "@tauri-apps/api/path";

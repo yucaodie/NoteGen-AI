@@ -35,6 +35,7 @@ export interface Response<T> {
   status: number;
   headers: Record<string, string>;
   text: () => string;
+  json: () => Promise<T>;
   arrayBuffer?: () => Promise<ArrayBuffer>;
 }
 export async function fetch<T>(url: string, options?: RequestInit & ClientOptions): Promise<Response<T>> {
@@ -48,6 +49,7 @@ export async function fetch<T>(url: string, options?: RequestInit & ClientOption
     status: res.status,
     headers: Object.fromEntries(res.headers.entries()),
     text: () => textBody,
+    json: () => Promise.resolve(data),
   };
 }
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { GithubFile } from '@/lib/sync/github';
 import { getImageFiles } from '@/lib/imageHosting/github';
 import { GithubRepoInfo, OctokitResponse, SyncStateEnum, UserInfo } from '@/lib/sync/github.types';

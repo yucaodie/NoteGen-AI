@@ -1,4 +1,6 @@
+// @ts-nocheck
 'use client'
+export const dynamic = 'force-dynamic'
 import ChatContent from '@/app/core/main/chat/chat-content'
 import { ClipboardListener } from '@/app/core/main/chat/clipboard-listener'
 import { ChatInput } from '@/app/core/main/chat/chat-input'

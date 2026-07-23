@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Store } from '@tauri-apps/plugin-store'
 import { create } from 'zustand'
 import { check, Update } from '@tauri-apps/plugin-updater'

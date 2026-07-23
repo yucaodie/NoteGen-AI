@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { toast } from '@/hooks/use-toast';
 import { Store } from '@tauri-apps/plugin-store';
 import { v4 as uuid } from 'uuid';

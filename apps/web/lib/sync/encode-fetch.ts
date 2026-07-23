@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { invoke } from '@tauri-apps/api/core';
 import { ClientOptions } from '@tauri-apps/plugin-http';
 

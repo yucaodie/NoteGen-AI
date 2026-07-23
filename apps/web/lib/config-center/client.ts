@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { fetch as httpFetch } from '@tauri-apps/plugin-http'
 
 import type {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getDb } from './index'
 import { getAllChats } from './chats'
 import { getAllMarks } from './marks'

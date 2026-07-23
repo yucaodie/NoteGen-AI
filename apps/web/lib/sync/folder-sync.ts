@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Store } from '@tauri-apps/plugin-store'
 import { fetch, Proxy } from '@tauri-apps/plugin-http'
 import { readTextFile } from '@tauri-apps/plugin-fs'

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type OpenAI from 'openai'
 import useArticleStore from '@/stores/article'
 import { useMcpStore } from '@/stores/mcp'

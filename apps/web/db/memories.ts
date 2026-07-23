@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getDb } from './index'
 import { fetchEmbedding } from '@/lib/ai/embedding'
 

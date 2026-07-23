@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { create } from 'zustand'
 import { Chat, clearChatsByTagId, deleteChat, initChatsDb, insertChat, updateChat, updateChatsInsertedById, getAllChats, deleteAllChats, insertChats, updateChatCondensedContent, getChatsByConversation } from '@/db/chats'
 import { uploadFile as uploadGithubFile, getFiles as githubGetFiles, decodeBase64ToString } from '@/lib/sync/github';

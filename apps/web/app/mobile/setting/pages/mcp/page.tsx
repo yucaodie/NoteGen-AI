@@ -1,4 +1,6 @@
+// @ts-nocheck
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'

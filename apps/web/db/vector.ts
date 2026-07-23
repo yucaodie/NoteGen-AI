@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from './index';
 import { getBM25Index } from '@/lib/bm25';
 

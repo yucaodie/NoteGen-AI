@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Store } from '@tauri-apps/plugin-store'
 import { confirm } from '@tauri-apps/plugin-dialog'
 

@@ -1,16 +1,28 @@
 // Tauri Plugin Store -> Browser localStorage
 const stores: Record<string, Record<string, unknown>> = {};
 
+const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+
+function safeGetItem(key: string): string | null {
+  if (!isBrowser) return null;
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function safeSetItem(key: string, value: string): void {
+  if (!isBrowser) return;
+  try { localStorage.setItem(key, value); } catch { /* ignore */ }
+}
+
 export class Store {
   private path: string;
   private data: Record<string, unknown>;
 
   constructor(path: string) {
     this.path = path;
-    try {
-      this.data = JSON.parse(localStorage.getItem(`tauri-store:${path}`) || '{}');
-    } catch {
-      this.data = {};
+    this.data = {};
+    const raw = safeGetItem(`tauri-store:${path}`);
+    if (raw) {
+      try { this.data = JSON.parse(raw); } catch { /* ignore */ }
     }
     stores[path] = this.data;
   }
@@ -29,11 +41,11 @@ export class Store {
 
   async set(key: string, value: unknown): Promise<void> {
     this.data[key] = value;
-    localStorage.setItem(`tauri-store:${this.path}`, JSON.stringify(this.data));
+    safeSetItem(`tauri-store:${this.path}`, JSON.stringify(this.data));
   }
 
   async save(): Promise<void> {
-    localStorage.setItem(`tauri-store:${this.path}`, JSON.stringify(this.data));
+    safeSetItem(`tauri-store:${this.path}`, JSON.stringify(this.data));
   }
 
   async entries<T>(): Promise<[string, T][]> {
@@ -43,16 +55,16 @@ export class Store {
   async delete(key: string): Promise<boolean> {
     const had = key in this.data;
     delete this.data[key];
-    localStorage.setItem(`tauri-store:${this.path}`, JSON.stringify(this.data));
+    safeSetItem(`tauri-store:${this.path}`, JSON.stringify(this.data));
     return had;
   }
 
   async clear(): Promise<void> {
     this.data = {};
-    localStorage.setItem(`tauri-store:${this.path}`, JSON.stringify({}));
+    safeSetItem(`tauri-store:${this.path}`, JSON.stringify({}));
   }
 
   async close(): Promise<void> {
-    // no-op in browser
+    // no-op
   }
 }

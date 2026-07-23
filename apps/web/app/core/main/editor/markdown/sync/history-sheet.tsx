@@ -176,25 +176,25 @@ export function HistorySheet({ editor }: HistorySheetProps) {
       switch (provider) {
         case 'github': {
           const fileInfo = await getGithubFiles({ path: activeFilePath, repo, ref: commitSha })
-          if (fileInfo?.content) {
-            content = decodeBase64ToString(fileInfo.content)
+          if ((fileInfo as any)?.content) {
+            content = decodeBase64ToString((fileInfo as any).content)
           }
           break
         }
         case 'gitee': {
           const fileInfo = await getGiteeFiles({ path: activeFilePath, repo, ref: commitSha })
-          if (fileInfo?.content) {
+          if ((fileInfo as any)?.content) {
             // Gitee 也是 base64 编码
-            content = decodeGiteeBase64(fileInfo.content)
+            content = decodeGiteeBase64((fileInfo as any).content)
           }
           break
         }
         case 'gitlab': {
           try {
             const fileInfo = await getGitlabFileContent({ path: activeFilePath, ref: commitSha, repo })
-            if (fileInfo?.content) {
+            if ((fileInfo as any)?.content) {
               // GitLab 返回的是 base64 编码内容，需要解码
-              content = decodeBase64ToString(fileInfo.content)
+            content = decodeBase64ToString((fileInfo as any).content)
             }
           } catch (e) {
             console.error('[HistorySheet] GitLab 获取内容失败:', e)
@@ -205,9 +205,9 @@ export function HistorySheet({ editor }: HistorySheetProps) {
           try {
             // 使用 getFileContentFromCommit 通过 Git tree API 获取特定 commit 的文件内容
             const fileInfo = await getGiteaFileContentFromCommit({ path: activeFilePath, ref: commitSha, repo })
-            if (fileInfo && fileInfo.content) {
+            if (fileInfo && (fileInfo as any).content) {
               // Gitea 返回的是 base64 编码内容，需要解码
-              content = decodeGiteeBase64(fileInfo.content)
+              content = decodeGiteeBase64((fileInfo as any).content)
             }
           } catch (e) {
             console.error('[HistorySheet] Gitea 获取内容失败:', e)

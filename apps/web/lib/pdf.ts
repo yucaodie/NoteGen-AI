@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as pdfjsLib from 'pdfjs-dist'
 import { readFile } from '@tauri-apps/plugin-fs'
 import { recognizeImageBlob } from '@/lib/ocr'

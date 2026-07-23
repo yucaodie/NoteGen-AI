@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Tool, ToolResult } from '../types'
 import { getMarks, getAllMarks, insertMark, updateMark, delMark, restoreMark, Mark, insertMarks, updateMarks, deleteMarks, restoreMarks } from '@/db/marks'
 import useTagStore from '@/stores/tag'

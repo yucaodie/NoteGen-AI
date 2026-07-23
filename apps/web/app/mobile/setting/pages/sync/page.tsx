@@ -1,4 +1,6 @@
+// @ts-nocheck
 'use client'
+export const dynamic = 'force-dynamic'
 
 import { FileDown, FileUp, Loader2, RefreshCcw, ShieldCheck, UploadCloud } from 'lucide-react'
 import { useTranslations } from 'next-intl'

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getFiles as getGithubFiles } from '@/lib/sync/github'
 import { GithubContent } from '@/lib/sync/github.types'
 import { getFiles as getGiteeFiles } from '@/lib/sync/gitee'

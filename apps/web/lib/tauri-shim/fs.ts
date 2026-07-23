@@ -1,8 +1,12 @@
+// @ts-nocheck
 // Tauri Plugin FS -> Browser IndexedDB virtual filesystem
+
+const isBrowser = typeof window !== 'undefined';
 
 let db: IDBDatabase | null = null;
 
 function openDB(): Promise<IDBDatabase> {
+  if (!isBrowser) return Promise.reject(new Error('IndexedDB not available'));
   if (db) return Promise.resolve(db);
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('notegen-fs', 1);

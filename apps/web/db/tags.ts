@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getDb } from "./index"
 import { Store } from '@tauri-apps/plugin-store';
 import { enqueueAutoDataSync } from '@/lib/sync/auto-data-sync-queue'

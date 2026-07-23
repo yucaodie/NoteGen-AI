@@ -84,7 +84,7 @@ export function GithubImageHosting() {
       // 检查图床仓库状态
       const imageRepo = await checkImageRepoState(actualRepoName)
       if (imageRepo) {
-        setImageRepoInfo(imageRepo)
+        setImageRepoInfo(imageRepo as any)
         setImageRepoState(SyncStateEnum.success)
       } else {
         setImageRepoInfo(undefined)

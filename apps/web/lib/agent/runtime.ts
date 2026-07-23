@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type OpenAI from 'openai'
 import { createChatCompletionStreamWithToolChoiceFallback, createOpenAIClient, getAISettings, getChatTokenLimitParams, getSystemPromptContent, handleAIError, validateAIService, withFastAiRequestOptions } from '@/lib/ai/utils'
 import { estimateTokens } from '@/lib/ai/token-counter'

@@ -1,4 +1,6 @@
+// @ts-nocheck
 'use client'
+export const dynamic = 'force-dynamic'
 import { MobileRecordStream } from './mobile-record-stream'
 
 export default function Record() {

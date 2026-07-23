@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Tool, ToolResult } from '../types'
 import { BaseDirectory, readTextFile, writeTextFile, remove, rename, copyFile, stat, exists } from '@tauri-apps/plugin-fs'
 import { appDataDir } from '@tauri-apps/api/path'

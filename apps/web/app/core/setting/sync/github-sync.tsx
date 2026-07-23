@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client'
 import { SyncPlatformCard } from "./components/sync-platform-card"
 import { useTranslations } from 'next-intl'

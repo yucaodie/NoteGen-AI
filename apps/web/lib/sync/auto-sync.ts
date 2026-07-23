@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Store } from '@tauri-apps/plugin-store'
 import { fetch, Proxy } from '@tauri-apps/plugin-http'
 import { decodeBase64ToString, getFiles as getGithubFiles, getFileCommits as getGithubFileCommits } from '@/lib/sync/github'

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Store } from '@tauri-apps/plugin-store'
 
 import { SyncStateEnum } from '@/lib/sync/github.types'

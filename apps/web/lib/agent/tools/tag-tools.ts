@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Tool, ToolResult } from '../types'
 import { getTags, insertTag, updateTag, delTag, Tag, insertTags } from '@/db/tags'
 

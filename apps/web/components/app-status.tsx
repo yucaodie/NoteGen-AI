@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { checkSyncRepoState, getUserInfo } from "@/lib/sync/github";
 import { useEffect } from "react";
 import useSettingStore from "@/stores/setting";

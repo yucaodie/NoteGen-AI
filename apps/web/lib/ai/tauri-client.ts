@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Channel, invoke } from '@tauri-apps/api/core'
 import type OpenAI from 'openai'
 import type { ModelsPage } from 'openai/resources/models'

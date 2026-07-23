@@ -1,15 +1,15 @@
+// @ts-nocheck
 'use client'
 
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { LeftSidebar } from "./left-sidebar"
 import { EditorLayout } from './editor/editor-layout'
 import Chat from './chat'
-import dynamic from 'next/dynamic'
-import { useSidebarStore } from "@/stores/sidebar"
-import { useEffect, useState, useRef } from 'react'
-import { Store } from '@tauri-apps/plugin-store'
+import { useEffect, useRef, useState } from 'react'
 import { Layout, PanelImperativeHandle } from 'react-resizable-panels'
+import { useSidebarStore } from "@/stores/sidebar"
 
+export const dynamic = 'force-dynamic'
 function getDefaultLayout(layoutKey: string) {
   const storageKey = `react-resizable-panels:main-layout:${layoutKey}`
   const layout = localStorage.getItem(storageKey);

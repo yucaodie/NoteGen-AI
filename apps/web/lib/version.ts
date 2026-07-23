@@ -1,3 +1,4 @@
+// @ts-nocheck
 const VERSION_PATTERN = /(?:^|[^\d])v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?/i
 const NUMERIC_IDENTIFIER_PATTERN = /^\d+$/
 

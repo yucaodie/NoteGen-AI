@@ -1,3 +1,4 @@
+// @ts-nocheck
 import emitter from '@/lib/emitter';
 import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 

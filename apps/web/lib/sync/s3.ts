@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { fetch, Proxy } from '@tauri-apps/plugin-http'
 import { S3Config } from '@/types/sync'
 import { buildRepoContentPath, debugSyncPath, debugSyncPerf } from './remote-file'

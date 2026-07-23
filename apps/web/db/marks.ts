@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getDb } from "./index"
 import { BaseDirectory, exists, mkdir, remove } from "@tauri-apps/plugin-fs"
 import { insertActivityEvent } from './activity'

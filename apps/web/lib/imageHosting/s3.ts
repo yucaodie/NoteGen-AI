@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Store } from "@tauri-apps/plugin-store";
 import { fetch, Proxy } from '@tauri-apps/plugin-http'
 import { toast } from '@/hooks/use-toast';

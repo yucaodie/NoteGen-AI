@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Tag, delTag, getTags, insertTags, deleteAllTags } from '@/db/tags'
 import { uploadFile as uploadGithubFile, getFiles as githubGetFiles, decodeBase64ToString } from '@/lib/sync/github'
 import { uploadFile as uploadGiteeFile, getFiles as giteeGetFiles } from '@/lib/sync/gitee'

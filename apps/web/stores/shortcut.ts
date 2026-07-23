@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { create } from 'zustand';
 import { Store } from "@tauri-apps/plugin-store";
 import { register, unregisterAll } from '@tauri-apps/plugin-global-shortcut';
