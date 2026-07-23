@@ -513,7 +513,7 @@ export function FolderItem({
         const result = await moveFileManagerEntry(renamePath, path)
 
         if (!result.moved) {
-          if (result.reason === 'invalid-target') {
+          if ((result as any).reason === 'invalid-target') {
             toast({
               title: t('context.invalidMoveTarget'),
               variant: 'destructive',

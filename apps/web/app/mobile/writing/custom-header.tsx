@@ -420,7 +420,7 @@ export function WritingHeader({ editor }: WritingHeaderProps) {
     try {
       const result = await moveFileManagerEntry(entry.relativePath, targetDirectoryPath)
       if (!result.moved) {
-        if (result.reason === 'invalid-target') {
+        if ((result as any).reason === 'invalid-target') {
           toast({ title: tMobile('moveInvalidTarget') })
         }
         return

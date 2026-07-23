@@ -132,7 +132,7 @@ export function MobileRecordDetail({ markId }: MobileRecordDetailProps) {
       try {
         const [record] = await Promise.all([getMarkById(markId), fetchTags()])
         if (!cancelled) {
-          setMark(record || null)
+          setMark(record as any || null)
         }
       } catch (error) {
         toast({

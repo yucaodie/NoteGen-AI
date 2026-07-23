@@ -235,3 +235,11 @@ export class Proxy {
 
 // Opener additions
 export async function revealItemInDir(_path: string): Promise<void> {}
+
+// Channel (was in core.ts)
+export class Channel<T = unknown> {
+  onmessage?: (message: T) => void;
+  constructor() {
+    this.onmessage = undefined;
+  }
+}

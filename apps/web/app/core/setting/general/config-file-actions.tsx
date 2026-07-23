@@ -25,7 +25,7 @@ export function ConfigFileActions() {
 
   async function handleImport() {
     try {
-      const file = await open({ title: t('importConfigTitle') })
+      const file = await open({ title: t('importConfigTitle') }) as string | null
       if (!file) return
 
       const content = await readTextFile(file)

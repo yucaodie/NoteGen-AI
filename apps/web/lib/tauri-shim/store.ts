@@ -19,6 +19,10 @@ export class Store {
     return new Store(path);
   }
 
+  static async get(path: string): Promise<Store> {
+    return new Store(path);
+  }
+
   async get<T>(key: string): Promise<T | undefined> {
     return this.data[key] as T | undefined;
   }
@@ -46,5 +50,9 @@ export class Store {
   async clear(): Promise<void> {
     this.data = {};
     localStorage.setItem(`tauri-store:${this.path}`, JSON.stringify({}));
+  }
+
+  async close(): Promise<void> {
+    // no-op in browser
   }
 }
