@@ -6,7 +6,6 @@ const nextConfig = {
   reactStrictMode: false,
   devIndicators: false,
   eslint: { ignoreDuringBuilds: true },
-  experimental: { instrumentationHook: true },
   images: {
     unoptimized: true,
   },
