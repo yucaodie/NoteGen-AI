@@ -255,4 +255,4 @@ function Page() {
   return <ResizableWrapper />
 }
 
-export default dynamic(() => Promise.resolve(Page), { ssr: false })
+export default Page
