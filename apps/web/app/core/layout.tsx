@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Suspense, useEffect } from "react"
 import { NextIntlProvider } from "@/components/providers/NextIntlProvider"
+import { TextSizeProvider } from "@/contexts/text-size-context"
 import 'react-photo-view/dist/react-photo-view.css'
 import { useI18n } from "@/hooks/useI18n"
 import { applyThemeColors } from "@/lib/theme-utils"
@@ -29,7 +30,9 @@ export default function CoreLayout({ children }: Readonly<{ children: React.Reac
       <TooltipProvider>
         <Suspense fallback={null}>
           <NextIntlProvider>
-            {children}
+            <TextSizeProvider>
+              {children}
+            </TextSizeProvider>
           </NextIntlProvider>
         </Suspense>
         <Toaster closeButton richColors position="bottom-right" />
