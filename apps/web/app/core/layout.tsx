@@ -1,6 +1,39 @@
 // @ts-nocheck
 'use client'
 
-export default function CoreLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { Suspense, useEffect } from "react"
+import { NextIntlProvider } from "@/components/providers/NextIntlProvider"
+import 'react-photo-view/dist/react-photo-view.css'
+import { useI18n } from "@/hooks/useI18n"
+import { applyThemeColors } from "@/lib/theme-utils"
+import { applyAppFontFamily } from "@/lib/font-settings"
+
+function useInitTheme() {
+  useEffect(() => {
+    try {
+      applyThemeColors()
+      applyAppFontFamily()
+    } catch { /* browser-only */ }
+  }, [])
+}
+
+export default function CoreLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { currentLocale } = useI18n()
+  useInitTheme()
+
+  return (
+    <ThemeProvider>
+      <TooltipProvider>
+        <Suspense fallback={null}>
+          <NextIntlProvider>
+            {children}
+          </NextIntlProvider>
+        </Suspense>
+        <Toaster closeButton richColors position="bottom-right" />
+      </TooltipProvider>
+    </ThemeProvider>
+  )
 }
