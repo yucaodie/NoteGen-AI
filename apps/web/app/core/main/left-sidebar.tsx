@@ -1,7 +1,7 @@
 'use client'
 
 import { Tabs, TabsContent } from "@/components/ui/tabs"
-import { Files, Highlighter } from "lucide-react"
+import { Files, Highlighter, Settings } from "lucide-react"
 import { FileSidebar } from "./file"
 import { NoteSidebar } from "./mark"
 import { FileActions } from "./file/file-actions"
@@ -11,6 +11,8 @@ import { useSidebarStore } from "@/stores/sidebar"
 import { ExpandableTabs } from "@/components/ui/expandable-tabs"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { TooltipButton } from "@/components/tooltip-button"
+import { useSettingsDialogStore } from "@/stores/settings-dialog"
 
 const SIDEBAR_TABS = [
   { title: "files", icon: Files },
@@ -19,6 +21,7 @@ const SIDEBAR_TABS = [
 
 export function LeftSidebar() {
   const { leftSidebarTab, setLeftSidebarTab } = useSidebarStore()
+  const { openSettings } = useSettingsDialogStore()
   const t = useTranslations()
 
   const handleTabChange = (index: number | null) => {
@@ -46,7 +49,9 @@ export function LeftSidebar() {
             onChange={handleTabChange}
             selected={getSelectedIndex()}
           />
-          <div className="grid shrink-0">
+          <div className="flex shrink-0 items-center gap-1">
+            <TooltipButton icon={<Settings className="size-4" />} tooltipText={t('common.settings')} onClick={() => openSettings()} side="bottom" />
+            <div className="grid">
             <motion.div
               initial={false}
               animate={leftSidebarTab === "files"
@@ -73,6 +78,7 @@ export function LeftSidebar() {
             >
               <MarkActions />
             </motion.div>
+            </div>
           </div>
         </div>
         <div className="relative min-h-0 flex-1">
