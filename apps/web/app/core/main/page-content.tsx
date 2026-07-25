@@ -9,7 +9,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Layout, PanelImperativeHandle } from 'react-resizable-panels'
 import { useSidebarStore } from "@/stores/sidebar"
 
-export const dynamic = 'force-dynamic'
 function getDefaultLayout(layoutKey: string) {
   if (typeof window === 'undefined') {
     const defaults: Record<string, number[]> = {
