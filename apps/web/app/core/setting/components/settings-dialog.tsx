@@ -156,11 +156,77 @@ function FileSettings() {
   )
 }
 
+function ModelSelect({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => unknown }) {
+  const { aiModelList } = useSettingStore()
+  const models = aiModelList.flatMap((provider: any) => (provider.models ?? []).map((model: any) => ({
+    id: model.id,
+    label: `${provider.title} / ${model.model}`,
+  })))
+
+  return (
+    <label className="grid gap-2 text-sm font-medium">
+      {label}
+      <select className="h-9 rounded-md border bg-background px-3 text-sm" value={value} onChange={(event) => void onChange(event.target.value)}>
+        <option value="">未选择</option>
+        {models.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
+      </select>
+    </label>
+  )
+}
+
+function ChatSettings() {
+  const { primaryModel, setPrimaryModel, condenseModel, setCondenseModel } = useSettingStore()
+  return <div className="space-y-6"><SectionTitle title="聊天" description="选择聊天和长对话压缩使用的模型。" /><ModelSelect label="默认聊天模型" value={primaryModel} onChange={setPrimaryModel} /><ModelSelect label="对话压缩模型" value={condenseModel} onChange={setCondenseModel} /></div>
+}
+
+function EditorSettings() {
+  const { completionModel, setCompletionModel, commitModel, setCommitModel } = useSettingStore()
+  return <div className="space-y-6"><SectionTitle title="编辑器" description="配置编辑器续写与提交信息生成模型。" /><ModelSelect label="续写模型" value={completionModel} onChange={setCompletionModel} /><ModelSelect label="提交信息模型" value={commitModel} onChange={setCommitModel} /></div>
+}
+
+function RecordSettings() {
+  const { markDescModel, setMarkDescModel } = useSettingStore()
+  return <div className="space-y-6"><SectionTitle title="记录" description="配置记录整理时使用的模型。" /><ModelSelect label="记录描述模型" value={markDescModel} onChange={setMarkDescModel} /></div>
+}
+
+function PromptSettings() {
+  const { systemPrompt, setSystemPrompt, agentPermissionMode, setAgentPermissionMode } = useSettingStore()
+  return <div className="space-y-6"><SectionTitle title="提示词" description="设置 AI 助手的系统提示词与操作确认方式。" /><label className="grid gap-2 text-sm font-medium">系统提示词<textarea className="min-h-44 rounded-md border bg-background p-3 text-sm" value={systemPrompt} onChange={(event) => void setSystemPrompt(event.target.value)} /></label><label className="grid gap-2 text-sm font-medium">操作确认<select className="h-9 rounded-md border bg-background px-3 text-sm" value={agentPermissionMode} onChange={(event) => void setAgentPermissionMode(event.target.value as typeof agentPermissionMode)}><option value="ask">每次询问</option><option value="allow">自动允许</option><option value="deny">始终拒绝</option></select></label></div>
+}
+
+function TemplateSettings() {
+  const { templateList } = useSettingStore()
+  return <div className="space-y-6"><SectionTitle title="模板" description="用于记录整理的内置模板。" /><div className="space-y-2">{templateList.map((template: any) => <div key={template.id} className="rounded-lg border p-3"><p className="text-sm font-medium">{template.title}</p><p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{template.content}</p></div>)}</div></div>
+}
+
+function AudioSettings() {
+  const { textToSpeechMode, setTextToSpeechMode, speechToTextMode, setSpeechToTextMode } = useSettingStore()
+  return <div className="space-y-6"><SectionTitle title="音频" description="选择浏览器中的朗读与语音识别方式。" /><label className="grid gap-2 text-sm font-medium">文本朗读<select className="h-9 rounded-md border bg-background px-3 text-sm" value={textToSpeechMode} onChange={(event) => void setTextToSpeechMode(event.target.value as typeof textToSpeechMode)}><option value="auto">自动</option><option value="browser">浏览器</option><option value="model">模型</option></select></label><label className="grid gap-2 text-sm font-medium">语音识别<select className="h-9 rounded-md border bg-background px-3 text-sm" value={speechToTextMode} onChange={(event) => void setSpeechToTextMode(event.target.value as typeof speechToTextMode)}><option value="auto">自动</option><option value="browser">浏览器</option><option value="model">模型</option></select></label></div>
+}
+
+function PendingSettings({ title }: { title: string }) {
+  return <div className="space-y-6"><SectionTitle title={title} description="该设置分区已恢复导航入口。浏览器适配将在后续阶段接入原版配置与运行时能力。" /><p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">当前应用继续保留工作区和本地数据。此分区的桌面端依赖正在迁移为浏览器能力。</p></div>
+}
+
 const sectionContent: Record<WebSettingsSection, () => React.JSX.Element> = {
+  about: () => <PendingSettings title="关于" />,
   general: GeneralSettings,
-  ai: AiSettings,
+  chat: ChatSettings,
+  editor: EditorSettings,
+  record: RecordSettings,
   sync: SyncSettings,
+  imageHosting: () => <PendingSettings title="图床" />,
+  ai: AiSettings,
+  rag: () => <PendingSettings title="RAG" />,
+  mcp: () => <PendingSettings title="MCP" />,
+  skills: () => <PendingSettings title="Skills" />,
+  prompt: PromptSettings,
+  memories: () => <PendingSettings title="记忆" />,
+  template: TemplateSettings,
   file: FileSettings,
+  shortcuts: () => <PendingSettings title="快捷键" />,
+  imageMethod: () => <PendingSettings title="图像处理" />,
+  audio: AudioSettings,
 }
 
 export function SettingsDialog() {
@@ -186,9 +252,9 @@ export function SettingsDialog() {
   const Section = sectionContent[section]
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && closeSettings()}>
-      <DialogContent className="flex h-[min(720px,calc(100vh-2rem))] max-w-4xl gap-0 overflow-hidden p-0">
+      <DialogContent className="flex h-[min(820px,calc(100vh-3rem))] w-[calc(100vw-3rem)] max-w-[1280px] gap-0 overflow-hidden p-0">
         <DialogHeader className="sr-only"><DialogTitle>设置</DialogTitle><DialogDescription>配置 SupaNoteGen 浏览器版。</DialogDescription></DialogHeader>
-        <aside className="flex w-44 shrink-0 flex-col gap-1 border-r bg-muted/30 p-3">
+        <aside className="flex w-56 shrink-0 flex-col gap-1 overflow-y-auto border-r bg-muted/30 p-3">
           <div className="mb-2 flex items-center gap-2 px-2 text-sm font-semibold"><Settings className="size-4" />设置</div>
           {webSettingsSections.map((item) => <Button key={item.id} variant={section === item.id ? 'secondary' : 'ghost'} className="justify-start" onClick={() => selectSection(item.id)}>{item.id === 'ai' ? <Sparkles data-icon="inline-start" /> : item.id === 'file' ? <FolderOpen data-icon="inline-start" /> : null}{item.label}</Button>)}
         </aside>
