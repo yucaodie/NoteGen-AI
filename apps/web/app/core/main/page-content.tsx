@@ -10,52 +10,35 @@ import { Layout, PanelImperativeHandle } from 'react-resizable-panels'
 import { useSidebarStore } from "@/stores/sidebar"
 
 function getDefaultLayout(layoutKey: string) {
+  const defaults: Record<string, number[]> = {
+    'left-center-right': [20, 50, 30],
+    'left-center': [30, 70, 0],
+    'center-right': [0, 60, 40],
+    'left-right': [50, 0, 50],
+    'left': [100, 0, 0],
+    'center': [0, 100, 0],
+    'right': [0, 0, 100],
+  }
   if (typeof window === 'undefined') {
-    const defaults: Record<string, number[]> = {
-      'left-center-right': [20, 50, 30],
-      'left-center': [30, 70, 0],
-      'center-right': [0, 60, 40],
-    }
     return defaults[layoutKey] || [30, 40, 30]
   }
   const storageKey = `react-resizable-panels:main-layout:${layoutKey}`
   const layout = localStorage.getItem(storageKey);
-  
+
   if (layout) {
     try {
       const parsed = JSON.parse(layout);
-      // 验证总和是否为 100
       const sum = parsed.reduce((a: number, b: number) => a + b, 0);
       if (Math.abs(sum - 100) < 0.1) {
         return parsed;
       }
-      // 如果总和不是 100，清除这个无效的值
-      console.warn(`Invalid layout sum ${sum} for ${layoutKey}, using defaults`);
       localStorage.removeItem(storageKey);
     } catch (e) {
       console.error('Failed to parse layout:', e);
     }
   }
-  
-  // 根据布局组合返回默认值，但始终返回3个面板的尺寸
-  switch (layoutKey) {
-    case 'left-center-right':
-      return [20, 50, 30]
-    case 'left-center':
-      return [30, 70, 0] // 右侧折叠
-    case 'center-right':
-      return [0, 60, 40] // 左侧折叠
-    case 'left-right':
-      return [50, 0, 50] // 中间折叠
-    case 'left':
-      return [100, 0, 0] // 只有左侧
-    case 'center':
-      return [0, 100, 0] // 只有中间
-    case 'right':
-      return [0, 0, 100] // 只有右侧
-    default:
-      return [30, 40, 30] // 默认三等分
-  }
+
+  return defaults[layoutKey] || [30, 40, 30]
 }
 
 function ResizableWrapper() {
