@@ -1,3 +1,4 @@
+'use client'
 import { TooltipButton } from "@/components/tooltip-button"
 import { FilePlus } from "lucide-react"
 import { useTranslations } from 'next-intl'

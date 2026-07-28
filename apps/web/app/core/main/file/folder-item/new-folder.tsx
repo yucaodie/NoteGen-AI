@@ -1,3 +1,4 @@
+'use client'
 import { ContextMenuItem } from "@/components/ui/enhanced-context-menu";
 import useArticleStore, { DirTree } from "@/stores/article";
 import { useTranslations } from "next-intl";

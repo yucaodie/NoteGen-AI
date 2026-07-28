@@ -1,3 +1,4 @@
+'use client'
 import { TooltipButton } from "@/components/tooltip-button"
 import { Chat } from "@/db/chats"
 import { Copy, Check } from "lucide-react"

@@ -1,3 +1,4 @@
+'use client'
 import { Chat } from "@/db/chats"
 import { GlobeIcon, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"

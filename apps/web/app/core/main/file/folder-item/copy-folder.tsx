@@ -1,3 +1,4 @@
+'use client'
 import { ContextMenuItem, ContextMenuShortcut } from "@/components/ui/enhanced-context-menu";
 import { DirTree } from "@/stores/article";
 import { useTranslations } from "next-intl";

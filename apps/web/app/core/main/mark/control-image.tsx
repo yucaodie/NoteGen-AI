@@ -1,3 +1,4 @@
+'use client'
 import { TooltipButton } from "@/components/tooltip-button"
 import { insertMark, Mark } from "@/db/marks"
 import { useTranslations } from 'next-intl'

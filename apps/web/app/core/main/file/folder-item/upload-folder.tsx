@@ -1,3 +1,4 @@
+'use client'
 import { useState } from 'react'
 import { FolderUp, LoaderCircle } from 'lucide-react'
 import { useTranslations } from 'next-intl'

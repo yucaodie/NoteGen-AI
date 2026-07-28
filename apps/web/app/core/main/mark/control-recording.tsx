@@ -1,3 +1,4 @@
+'use client'
 import { insertMark } from "@/db/marks"
 import useMarkStore from "@/stores/mark"
 import useTagStore from "@/stores/tag"

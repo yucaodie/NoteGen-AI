@@ -1,3 +1,4 @@
+'use client'
 import { ContextMenuItem, ContextMenuSeparator, ContextMenuSub, ContextMenuSubTrigger, ContextMenuSubContent } from "@/components/ui/enhanced-context-menu"
 import { Switch } from "@/components/ui/switch"
 import { Database, Trash2 } from "lucide-react"

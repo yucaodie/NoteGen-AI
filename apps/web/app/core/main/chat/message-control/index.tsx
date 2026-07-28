@@ -1,3 +1,4 @@
+'use client'
 import { Chat } from "@/db/chats"
 import useChatStore from "@/stores/chat"
 import { XIcon } from "lucide-react"

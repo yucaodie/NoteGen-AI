@@ -1,3 +1,4 @@
+'use client'
 import React from 'react'
 import useChatStore from '@/stores/chat'
 import useTagStore from '@/stores/tag'

@@ -1,3 +1,4 @@
+'use client'
 import { Mark } from "@/db/marks"
 import { useTranslations } from 'next-intl'
 import {

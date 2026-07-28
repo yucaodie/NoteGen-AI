@@ -1,3 +1,4 @@
+'use client'
 import { Chat } from "@/db/chats"
 import { FileText } from "lucide-react"
 import {

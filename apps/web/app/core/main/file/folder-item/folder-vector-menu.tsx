@@ -1,3 +1,4 @@
+'use client'
 import { ContextMenuItem } from "@/components/ui/enhanced-context-menu";
 import { useTranslations } from "next-intl";
 import { Trash2, RefreshCw, Loader2 } from "lucide-react";

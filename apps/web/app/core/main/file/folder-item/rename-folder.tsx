@@ -1,3 +1,4 @@
+'use client'
 import { ContextMenuItem, ContextMenuShortcut } from "@/components/ui/enhanced-context-menu";
 import { Kbd } from "@/components/ui/kbd";
 import { useTranslations } from "next-intl";

@@ -1,3 +1,4 @@
+'use client'
 import { Chat } from "@/db/chats";
 import { useState, useEffect, useRef } from "react";
 import { Brain, ChevronRight, Loader2 } from "lucide-react";

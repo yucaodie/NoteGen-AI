@@ -1,3 +1,4 @@
+'use client'
 import { ContextMenuItem } from "@/components/ui/enhanced-context-menu";
 import { Download, LoaderCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
