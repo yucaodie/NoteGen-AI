@@ -9,7 +9,14 @@ let pdfjsLibPromise: Promise<PdfJsLib> | null = null
 async function loadPdfJs(): Promise<PdfJsLib> {
   pdfjsLibPromise ??= import('pdfjs-dist').then((pdfjsLib) => {
     if (typeof window !== 'undefined') {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+          'pdfjs-dist/build/pdf.worker.min.mjs',
+          import.meta.url
+        ).toString()
+      } catch {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
+      }
     }
 
     return pdfjsLib
