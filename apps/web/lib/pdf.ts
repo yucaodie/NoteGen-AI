@@ -1,11 +1,21 @@
 // @ts-nocheck
-import * as pdfjsLib from 'pdfjs-dist'
 import { readFile } from '@tauri-apps/plugin-fs'
 import { recognizeImageBlob } from '@/lib/ocr'
 
-// 初始化 PDF.js worker
-if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
+type PdfJsLib = typeof import('pdfjs-dist')
+
+let pdfjsLibPromise: Promise<PdfJsLib> | null = null
+
+async function loadPdfJs(): Promise<PdfJsLib> {
+  pdfjsLibPromise ??= import('pdfjs-dist').then((pdfjsLib) => {
+    if (typeof window !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
+    }
+
+    return pdfjsLib
+  })
+
+  return pdfjsLibPromise
 }
 
 // 类型守卫：检查是否为 TextItem
@@ -41,6 +51,8 @@ export async function extractTextFromPDF(
   onProgress?: (progress: string) => void
 ): Promise<string> {
   try {
+    const pdfjsLib = await loadPdfJs()
+
     // 使用 Tauri 的 readFile 读取文件为 Uint8Array
     const fileData = await readFile(filePath)
 
@@ -135,7 +147,7 @@ export async function extractTextFromPDF(
  * 使用 OCR 从 PDF 中提取文本（用于图片型 PDF）
  */
 async function extractTextWithOCR(
-  pdfDocument: pdfjsLib.PDFDocumentProxy,
+  pdfDocument: any,
   onProgress?: (progress: string) => void
 ): Promise<string> {
   let fullText = ''
@@ -176,6 +188,7 @@ async function extractTextWithOCR(
  */
 export async function extractTextFromPDFFile(file: File): Promise<string> {
   try {
+    const pdfjsLib = await loadPdfJs()
     const arrayBuffer = await file.arrayBuffer()
 
     // 加载 PDF 文档
@@ -211,6 +224,7 @@ export async function extractTextFromPDFFile(file: File): Promise<string> {
  */
 export async function getPDFInfo(filePath: string): Promise<{ numPages: number }> {
   try {
+    const pdfjsLib = await loadPdfJs()
     const response = await fetch(filePath)
     const arrayBuffer = await response.arrayBuffer()
 
@@ -233,6 +247,7 @@ export async function getPDFInfo(filePath: string): Promise<{ numPages: number }
  */
 export async function getPDFInfoFromFile(file: File): Promise<{ numPages: number }> {
   try {
+    const pdfjsLib = await loadPdfJs()
     const arrayBuffer = await file.arrayBuffer()
 
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })

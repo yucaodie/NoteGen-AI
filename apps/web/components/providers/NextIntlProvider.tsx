@@ -3,6 +3,8 @@
 import { NextIntlClientProvider } from 'next-intl';
 import type { AbstractIntlMessages } from 'next-intl';
 import { useEffect, useState } from 'react';
+import zhMessages from '@/messages/zh.json';
+import zhCommonMessages from '@/messages/common/zh.json';
 import {
   DEFAULT_LOCALE,
   LANGUAGE_STORAGE_KEY,
@@ -11,8 +13,13 @@ import {
   type SupportedLocale,
 } from '@/i18n/config';
 
+const DEFAULT_MESSAGES: AbstractIntlMessages = {
+  ...zhMessages,
+  common: zhCommonMessages,
+};
+
 export function NextIntlProvider({ children }: { children: React.ReactNode }) {
-  const [messages, setMessages] = useState<AbstractIntlMessages | null>(null);
+  const [messages, setMessages] = useState<AbstractIntlMessages>(DEFAULT_MESSAGES);
   const [locale, setLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
 
   useEffect(() => {
@@ -26,14 +33,12 @@ export function NextIntlProvider({ children }: { children: React.ReactNode }) {
 
       if (savedLocale !== DEFAULT_LOCALE) {
         setLocale(DEFAULT_LOCALE);
-        void loadMessagesWithFallback(DEFAULT_LOCALE).then(setMessages);
+        void loadMessagesWithFallback(DEFAULT_LOCALE).then((msgs) => {
+          setMessages(msgs);
+        });
       }
     });
   }, []);
-
-  if (!messages) {
-    return null;
-  }
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
