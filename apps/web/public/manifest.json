@@ -1,0 +1,11 @@
+{
+  "name": "SupaNoteGen",
+  "short_name": "NoteGen",
+  "description": "AI-powered knowledge workspace for note-taking and writing",
+  "start_url": "/core/main",
+  "display": "standalone",
+  "background_color": "#0f0f11",
+  "theme_color": "#0f0f11",
+  "orientation": "any",
+  "icons": []
+}
