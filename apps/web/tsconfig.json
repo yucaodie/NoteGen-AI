@@ -29,7 +29,6 @@
       "@tauri-apps/plugin-dialog": ["./lib/tauri-shim/dialog.ts"],
       "@tauri-apps/api/path": ["./lib/tauri-shim/path.ts"],
       "@tauri-apps/api/core": ["./lib/tauri-shim/stubs.ts"],
-      "@tauri-apps/api/path": ["./lib/tauri-shim/path.ts"],
       "@tauri-apps/api/event": ["./lib/tauri-shim/stubs.ts"],
       "@tauri-apps/api/webviewWindow": ["./lib/tauri-shim/stubs.ts"],
       "@tauri-apps/api/app": ["./lib/tauri-shim/stubs.ts"],
