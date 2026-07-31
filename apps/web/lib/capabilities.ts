@@ -20,7 +20,7 @@ export function detectCapabilities(): BrowserCapabilities {
   const nav = typeof navigator !== 'undefined' ? navigator : undefined
 
   cached = {
-    fileSystemAccess: Boolean(win?.showDirectoryPicker),
+    fileSystemAccess: Boolean((win as any)?.showDirectoryPicker),
     mediaRecorder: Boolean(win?.MediaRecorder),
     clipboardRead: Boolean(nav?.clipboard?.read),
     clipboardWrite: Boolean(nav?.clipboard?.write),

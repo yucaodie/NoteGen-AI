@@ -13,7 +13,9 @@ function hslToCssValue(hsl: HSLValue): string {
  * 这个函数会同时应用亮色和暗色主题的自定义颜色
  * 暗色主题的颜色通过设置在 .dark 类上的样式来实现
  */
-export function applyThemeColors(colors: CustomThemeColors): void {
+export function applyThemeColors(colors?: CustomThemeColors): void {
+  if (!colors) return
+
   const root = document.documentElement
 
   // 获取或创建用于暗色主题自定义颜色的 style 标签
