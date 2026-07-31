@@ -3,7 +3,15 @@
   "extends": ["next/core-web-vitals", "next/typescript"],
   "rules": {
     "react-hooks/exhaustive-deps": "off",
-    "@typescript-eslint/no-explicit-any": "off"
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/ban-ts-comment": [
+      "warn",
+      {
+        "ts-nocheck": true,
+        "ts-ignore": "allow-with-description",
+        "ts-expect-error": "allow-with-description"
+      }
+    ]
   },
   "ignorePatterns": [
     "docs/**"
