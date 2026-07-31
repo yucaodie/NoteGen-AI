@@ -8,6 +8,7 @@ import Chat from './chat'
 import { useEffect, useRef, useState } from 'react'
 import { Layout, PanelImperativeHandle } from 'react-resizable-panels'
 import { useSidebarStore } from "@/stores/sidebar"
+import { Store } from '@tauri-apps/plugin-store'
 
 function getDefaultLayout(layoutKey: string) {
   const defaults: Record<string, number[]> = {
