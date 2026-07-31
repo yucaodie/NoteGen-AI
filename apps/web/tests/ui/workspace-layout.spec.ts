@@ -14,16 +14,12 @@ test('core/main page renders resizable layout panels', async ({ page }) => {
   await page.waitForTimeout(5000);
 
   await expect(page.getByText('出错了')).toHaveCount(0);
-
-  const handles = page.locator('[data-panel-group]');
-  await expect(handles.first()).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('[role="separator"]').first()).toBeVisible({ timeout: 10000 });
 });
 
 test('navigating back to core/main after home page works', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 15000 });
-  await page.waitForTimeout(2000);
-
-  await page.goto('/core/main', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const res = await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  expect(res?.url()).toContain('/core/main');
   await page.waitForTimeout(5000);
 
   await expect(page.getByText('出错了')).toHaveCount(0);
